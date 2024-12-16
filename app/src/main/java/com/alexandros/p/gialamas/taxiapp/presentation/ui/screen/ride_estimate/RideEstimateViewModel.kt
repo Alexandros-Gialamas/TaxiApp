@@ -1,8 +1,8 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alexandros.p.gialamas.taxiapp.data.repository.RideRepositoryImpl
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
@@ -10,6 +10,7 @@ import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideEstimateUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class RideEstimateViewModel @Inject constructor(
     private val getRideEstimateUseCase: GetRideEstimateUseCase,
-    private val confirmRideUseCase: ConfirmRideUseCase
+    private val confirmRideUseCase: ConfirmRideUseCase,
 ) : ViewModel() {
 
 
@@ -54,14 +55,32 @@ class RideEstimateViewModel @Inject constructor(
         _uiState.update { it.copy(destination = destination) }
     }
 
+    fun updateHideParameters(parameters: Boolean) {
+        _uiState.update { it.copy(hideParameters = parameters) }
+    }
+
+    private var apiRequestJob: Job? = null
+
+    fun cancelApiRequest(){
+        apiRequestJob?.cancel()
+        apiRequestJob = null
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                hideParameters = false
+            )
+        }
+    }
 
     fun getRideEstimate(
         customerId: String,
         origin: String,
         destination: String
     ) {
+
+        apiRequestJob?.cancel()
+
         viewModelScope.launch() {
-            Log.d("RideEstimateViewModel", "getRideEstimate triggered")
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val rideEstimate = getRideEstimateUseCase(
@@ -69,18 +88,18 @@ class RideEstimateViewModel @Inject constructor(
                     origin = origin,
                     destination = destination
                 )
-                Log.d("RideEstimateViewModel", "Ride estimate received: $rideEstimate")
                 _uiState.update {
                     it.copy(
                         rideEstimate = Result.Success(data = rideEstimate),
+                        hideParameters = true,
                         isLoading = false
                     )
                 }
             } catch (e: Exception) {
-                Log.e("RideEstimateViewModel", "Error getting ride estimate", e)
                 _uiState.update {
                     it.copy(
                         rideEstimate = Result.Error(RideEstimateError.Network.NETWORK_ERROR),
+                        hideParameters = false,
                         isLoading = false
                     )
                 }

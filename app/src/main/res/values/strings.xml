@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">TaxiApp</string>
+
+
+    // Ride Estimate Screen
+    <string name="customer_id_label">Customer ID</string>
+    <string name="origin_label">Origin</string>
+    <string name="origin_location_label">Origin location</string>
+    <string name="destination_label">Destination</string>
+    <string name="destination_location_label">Destination location</string>
+    <string name="distance_label">Distance</string>
+    <string name="latitude_label">Latitude</string>
+    <string name="longitude_label">Longitude</string>
+    <string name="duration_label">Duration</string>
+    <string name="ride_estimate_button_label">Get Ride Estimate</string>
+    <string name="cancel_button_label">Cancel</string>
+    <string name="new_ride_button_label">New Ride</string>
+    <string name="drivers_available_label">Available Drivers</string>
+    <string name="select_driver_button_label">Select</string>
+    <string name="driver_label">Driver</string>
+    <string name="description_label">Description</string>
+    <string name="vehicle_label">Vehicle</string>
+    <string name="rating_label">Rating</string>
+    <string name="value_label">Value</string>
+
+
+
 </resources>

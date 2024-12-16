@@ -1,6 +1,5 @@
 package com.alexandros.p.gialamas.taxiapp.data.source.remote.api
 
-import android.util.Log
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
@@ -26,7 +25,7 @@ class RideServiceImpl @Inject constructor(
         origin: String,
         destination: String
     ): RideEstimateResponse {
-        Log.d("RideServiceImpl", "getRideEstimate request: $customerId, $origin, $destination")
+
         val response = httpClient.post(Constants.API_RIDE_ESTIMATE_ENDPOINT) {
             contentType(ContentType.Application.Json)
             setBody(
@@ -38,10 +37,8 @@ class RideServiceImpl @Inject constructor(
             )
         }
         return try {
-            Log.d("Ride API Response", "Response Body: ${response.body<RideEstimateResponse>()}")
             response.body()
         } catch (e: Exception) {
-            Log.e("Ride API Error", "Error fetching data", e)
             throw e
         }
     }
