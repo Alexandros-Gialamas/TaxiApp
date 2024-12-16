@@ -68,6 +68,8 @@ dependencies {
     implementation("io.ktor:ktor-client-android:3.0.0")
     implementation("io.ktor:ktor-client-content-negotiation:3.0.0")
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.0")
+    implementation ("io.ktor:ktor-client-serialization-jvm:3.0.0")
+    implementation ("io.ktor:ktor-client-cio:3.0.0")
     implementation("io.ktor:ktor-client-logging:3.0.0")
     testImplementation("io.ktor:ktor-client-mock:3.0.0")
 

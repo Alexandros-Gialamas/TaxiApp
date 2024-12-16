@@ -1,8 +1,9 @@
 package com.alexandros.p.gialamas.taxiapp.domain.model
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-
+@Serializable
 data class RideEstimate(
     @SerialName("origin")
     val origin: Location,
@@ -16,6 +17,7 @@ data class RideEstimate(
     val options: List<RideOption>
 )
 
+@Serializable
 data class Location(
     @SerialName("latitude")
     val latitude: Double,
@@ -23,6 +25,7 @@ data class Location(
     val longitude: Double
 )
 
+@Serializable
 data class RideOption(
     @SerialName("id")
     val id: Int,
@@ -38,6 +41,7 @@ data class RideOption(
     val value: Double
 )
 
+@Serializable
 data class Review(
     @SerialName("rating")
     val rating: Double,
