@@ -1,16 +1,14 @@
-package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
+package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm
 
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.ViewState
 
-data class RideEstimateState(
-    val rideEstimate: Result<RideEstimate, RideEstimateError> = Result.Idle,
+data class RideConfirmState(
+    val rideEstimate: RideEstimate? = null,
     val isLoading: Boolean = false,
-    val debounceTimeMillis: Long = 60000,
     val customerId: String = "",
     val origin: String = "",
     val destination: String = ""
 ) : ViewState
-

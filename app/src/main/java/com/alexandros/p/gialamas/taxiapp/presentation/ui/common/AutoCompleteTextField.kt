@@ -4,7 +4,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,13 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun AutoCompleteTextField(
+    modifier: Modifier = Modifier,
     options: List<String>,
     onOptionSelected: (String) -> Unit,
     keyboardController: SoftwareKeyboardController? = null,
@@ -41,20 +42,21 @@ fun AutoCompleteTextField(
     val filteredOptions = options.filter { it.contains(text, ignoreCase = true) }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth(0.9f)
             .padding(8.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         OutlinedTextField(
-            modifier = Modifier.fillMaxWidth(0.9f),
-            maxLines = 2,
+            modifier = modifier.fillMaxWidth(0.9f),
+            maxLines = 3,
             trailingIcon = {
                 if (text.isNotBlank()) {
                     IconButton(
                         onClick = {
                             text = ""
+                            suggestionsVisible = false
                         }
                     ) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = null)
@@ -70,10 +72,42 @@ fun AutoCompleteTextField(
         )
 
         if (suggestionsVisible && filteredOptions.isNotEmpty()) {
-            LazyColumn {
-                items(filteredOptions) { option ->
+//            LazyColumn (
+//                modifier = modifier
+//                    .fillMaxWidth()
+//                    .height(IntrinsicSize.Min)
+//                    .padding(8.dp)
+//            ){
+//                items(filteredOptions) { option ->
+//                    Text(
+//                        modifier = modifier
+//                            .padding(vertical = 6.dp)
+//                            .border(
+//                                width = 1.dp,
+//                                color = Color.Black,
+//                                shape = RectangleShape
+//                            )
+//                            .clickable {
+//                                text = option
+//                                suggestionsVisible = false
+//                                onOptionSelected(option)
+//                                keyboardController?.hide()
+//                            }
+//                            .padding(8.dp),
+//                        text = option,
+//                    )
+//                }
+//            }
+            Column (
+                modifier = modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Min)
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                filteredOptions.forEach { option ->
                     Text(
-                        modifier = Modifier
+                        modifier = modifier
                             .padding(vertical = 6.dp)
                             .border(
                                 width = 1.dp,

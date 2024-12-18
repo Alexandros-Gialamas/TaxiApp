@@ -1,5 +1,9 @@
 package com.alexandros.p.gialamas.taxiapp.data.model
 
+
+import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
+import com.alexandros.p.gialamas.taxiapp.domain.model.Location
+import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -23,34 +27,34 @@ data class RideEstimateResponse(
 @Serializable
 data object RouteResponse
 
-@Serializable
-data class Location(
-    @SerialName("latitude")
-    val latitude: Double,
-    @SerialName("longitude")
-    val longitude: Double
-)
-
-@Serializable
-data class RideOption(
-    @SerialName("id")
-    val id: Int,
-    @SerialName("name")
-    val name: String,
-    @SerialName("description")
-    val description: String,
-    @SerialName("vehicle")
-    val vehicle: String,
-    @SerialName("review")
-    val review: Review,
-    @SerialName("value")
-    val value: Double
-)
-
-@Serializable
-data class Review(
-    @SerialName("rating")
-    val rating: Double,
-    @SerialName("comment")
-    val comment: String
-)
+//@Serializable
+//data class Location(
+//    @SerialName("latitude")
+//    val latitude: Double,
+//    @SerialName("longitude")
+//    val longitude: Double
+//)
+//
+//@Serializable
+//data class RideOption(
+//    @SerialName("id")
+//    val id: Int,
+//    @SerialName("name")
+//    val name: String,
+//    @SerialName("description")
+//    val description: String,
+//    @SerialName("vehicle")
+//    val vehicle: String,
+//    @SerialName("review")
+//    val review: Review,
+//    @SerialName("value")
+//    val value: Double,
+//)
+//
+//@Serializable
+//data class Review(
+//    @SerialName("rating")
+//    val rating: Double,
+//    @SerialName("comment")
+//    val comment: String
+//)

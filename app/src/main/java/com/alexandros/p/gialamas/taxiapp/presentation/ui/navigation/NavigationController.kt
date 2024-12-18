@@ -7,6 +7,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
+import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.RideConfirmScreen
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideEstimateScreen
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.RideHistoryScreen
@@ -37,9 +38,14 @@ fun NavigationController() {
 
         composable<Screens.RideEstimateScreen> {
             RideEstimateScreen(
-                onRideSelected = { result ->
+                onRideSelected = { result: RideEstimate, customerId: String, origin: String, destination: String ->
                     navController.navigate(
-                        Screens.RideConfirmScreen(result)
+                        Screens.RideConfirmScreen(
+                            result,
+                            customerId,
+                            origin,
+                            destination
+                        )
                     )
                 }
             )
@@ -51,15 +57,23 @@ fun NavigationController() {
             val args = it.toRoute<Screens.RideConfirmScreen>()
             RideConfirmScreen(
                 result = args.rideEstimate,
-                onRideConfirmed = {
-                    navController.navigate(Screens.RideHistoryScreen)
+                customerId = args.customerId,
+                origin = args.origin,
+                destination = args.destination,
+                onRideConfirmed = { rideOption ->
+                    navController.navigate(Screens.RideHistoryScreen(rideOption))
                 }
             )
         }
 
 
-        composable<Screens.RideHistoryScreen> {
-            RideHistoryScreen()
+        composable<Screens.RideHistoryScreen>(
+            typeMap = mapOf(navigationCustomArgument<RideOption>())
+        ) {
+            val args = it.toRoute<Screens.RideHistoryScreen>()
+            RideHistoryScreen(
+                rideOption = args.rideOption
+            )
         }
 
     }
@@ -73,9 +87,14 @@ sealed class Screens {
     data object RideEstimateScreen : Screens()
 
     @Serializable
-    data class RideConfirmScreen(val rideEstimate: RideEstimate) : Screens()
+    data class RideConfirmScreen(
+        val rideEstimate: RideEstimate,
+        val customerId: String,
+        val origin: String,
+        val destination: String,
+    ) : Screens()
 
     @Serializable
-    data object RideHistoryScreen : Screens()
+    data class RideHistoryScreen(val rideOption: RideOption) : Screens()
 
 }

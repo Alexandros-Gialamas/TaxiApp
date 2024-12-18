@@ -4,16 +4,16 @@ import android.annotation.SuppressLint
 
 @SuppressLint("DefaultLocale")
 fun formatDuration(duration: Int): String {
-    val hours = duration / 60
-    val minutes = duration % 60
-    val seconds = (duration * 60) % 60
+    val hours = duration / 3600
+    val minutes = (duration % 3600) / 60
+    val seconds = duration % 60
     return String.format("%02d:%02d:%02d", hours, minutes, seconds)
 }
 
 fun formatDurationToReadableString(duration: Int): String {
-    val hours = duration / 60
-    val minutes = duration % 60
-    val seconds = (duration * 60) % 60
+    val hours = duration / 3600
+    val minutes = (duration % 3600) / 60
+    val seconds = duration % 60
 
     val result = StringBuilder()
     if (hours > 0) {

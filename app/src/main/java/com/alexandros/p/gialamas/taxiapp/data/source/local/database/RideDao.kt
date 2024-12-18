@@ -13,7 +13,10 @@ interface RideDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRide(ride: RideEntity)
 
+    @Query("SELECT * FROM rides_table")
+    fun getAllRides(): Flow<List<RideEntity>>
+
     @Query("SELECT * FROM rides_table WHERE driverId = :driverId OR :driverId = 0")
-    fun getRideHistory(driverId: Int): Flow<List<RideEntity>>
+    fun getRideHistory(driverId: Int? = null): Flow<List<RideEntity>>
 
 }
