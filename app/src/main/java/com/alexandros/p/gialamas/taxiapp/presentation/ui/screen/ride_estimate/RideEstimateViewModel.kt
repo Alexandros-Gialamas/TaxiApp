@@ -2,14 +2,14 @@ package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alexandros.p.gialamas.taxiapp.data.repository.RideRepositoryImpl
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
-import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideEstimateUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,12 +20,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class RideEstimateViewModel @Inject constructor(
     private val getRideEstimateUseCase: GetRideEstimateUseCase,
-    private val confirmRideUseCase: ConfirmRideUseCase,
 ) : ViewModel() {
 
 
@@ -55,19 +55,15 @@ class RideEstimateViewModel @Inject constructor(
         _uiState.update { it.copy(destination = destination) }
     }
 
-    fun updateHideParameters(parameters: Boolean) {
-        _uiState.update { it.copy(hideParameters = parameters) }
-    }
 
     private var apiRequestJob: Job? = null
 
-    fun cancelApiRequest(){
+    fun cancelApiRequest() {
         apiRequestJob?.cancel()
         apiRequestJob = null
         _uiState.update {
             it.copy(
                 isLoading = false,
-                hideParameters = false
             )
         }
     }
@@ -78,57 +74,39 @@ class RideEstimateViewModel @Inject constructor(
         destination: String
     ) {
 
-        apiRequestJob?.cancel()
+        apiRequestJob = Job()
 
-        viewModelScope.launch() {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                val rideEstimate = getRideEstimateUseCase(
-                    customerId = customerId,
-                    origin = origin,
-                    destination = destination
-                )
-                _uiState.update {
-                    it.copy(
-                        rideEstimate = Result.Success(data = rideEstimate),
-                        hideParameters = true,
-                        isLoading = false
-                    )
+        apiRequestJob?.let {
+            viewModelScope.launch(Dispatchers.IO + apiRequestJob as CompletableJob) {
+                withContext(Dispatchers.Main) {
+                    _uiState.update { it.copy(isLoading = true) }
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        rideEstimate = Result.Error(RideEstimateError.Network.NETWORK_ERROR),
-                        hideParameters = false,
-                        isLoading = false
+                try {
+                    val rideEstimate = getRideEstimateUseCase(
+                        customerId = customerId,
+                        origin = origin,
+                        destination = destination
                     )
-                }
-            }
-        }
-    }
-
-
-    fun confirmRide(ride: Ride) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            try {
-                val isSuccess = confirmRideUseCase(ride = ride)
-                _uiState.update {
-                    it.copy(
-                        rideEstimate = it.rideEstimate,
-                        isLoading = false
-                    )
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        rideEstimate = Result.Error(RideEstimateError.Ride.RIDE_FAILED_TO_CONFIRM),
-                        isLoading = false
-                    )
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                rideEstimate = Result.Success(data = rideEstimate),
+                                isLoading = false
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                rideEstimate = Result.Error(RideEstimateError.Network.NETWORK_ERROR),
+                                isLoading = false
+                            )
+                        }
+                    }
                 }
             }
         }
+
     }
-
-
 }

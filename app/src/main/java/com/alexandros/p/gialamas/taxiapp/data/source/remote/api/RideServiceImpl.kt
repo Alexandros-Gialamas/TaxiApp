@@ -2,13 +2,13 @@ package com.alexandros.p.gialamas.taxiapp.data.source.remote.api
 
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
+import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryRequest
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistoryResponse
 import com.alexandros.p.gialamas.taxiapp.util.Constants
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -54,10 +54,16 @@ class RideServiceImpl @Inject constructor(
     }
 
     override suspend fun getRideHistory(customerId: String, driverId: Int?): RideHistoryResponse {
-        return httpClient.get(Constants.API_HISTORY_RIDE_ENDPOINT + customerId) {
-            driverId?.let {
-                parameter("driver_id", it)
-            }
-        }.body()
+        val response = httpClient.get("${Constants.API_HISTORY_RIDE_ENDPOINT}${customerId}") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                RideHistoryRequest(
+                    customerId = customerId,
+                    driverId = driverId
+                )
+            )
+        }
+        return response.body()
     }
+
 }

@@ -2,12 +2,14 @@ package com.alexandros.p.gialamas.taxiapp.presentation.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -25,7 +27,7 @@ fun TaxiScaffold(
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
-    content: @Composable () -> Unit,
+    content: @Composable (PaddingValues) -> Unit,
 ) {
 
 
@@ -36,21 +38,24 @@ fun TaxiScaffold(
         bottomBar = bottomBar,
         floatingActionButton = floatingActionButton,
         floatingActionButtonPosition = FabPosition.Center,
-        content = { paddingValues ->
-
-            Column(
-                modifier = columnModifier
-                    .fillMaxSize()
-                    .padding(paddingValues = paddingValues)
-                    .consumeWindowInsets(paddingValues)
-                    .windowInsetsPadding(WindowInsets.safeDrawing),
-                verticalArrangement = columnVerticalArrangement,
-                horizontalAlignment = columnHorizontalAlignment
-            ) {
-                content()
-            }
-
+        content = {
+            paddingValues ->
+            content(paddingValues)
         }
+
+//            LazyColumn(
+//                modifier = columnModifier
+//                    .fillMaxSize()
+//                    .padding(paddingValues = paddingValues)
+//                    .consumeWindowInsets(paddingValues)
+//                    .windowInsetsPadding(WindowInsets.safeDrawing),
+//                verticalArrangement = columnVerticalArrangement,
+//                horizontalAlignment = columnHorizontalAlignment
+//            ) {
+//                item {  content() }
+//            }
+
+//        }
     )
 
 }

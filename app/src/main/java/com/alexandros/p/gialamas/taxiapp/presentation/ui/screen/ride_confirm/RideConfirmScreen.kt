@@ -3,19 +3,24 @@ package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -30,26 +35,34 @@ import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiScaffold
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideEstimateContent
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideEstimateState
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideEstimateViewModel
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideOptionItem
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatDistance
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatDurationToReadableString
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun RideConfirmScreen(
     modifier: Modifier = Modifier,
-    viewModel: RideEstimateViewModel = hiltViewModel<RideEstimateViewModel>(),
+    viewModel: RideConfirmViewModel = hiltViewModel<RideConfirmViewModel>(),
     result: RideEstimate,
+    customerId: String,
+    origin: String,
+    destination: String,
     onRideConfirmed: (RideOption) -> Unit
 ) {
+
+    LaunchedEffect(Unit) {
+        viewModel.collectState(customerId, origin, destination, result)
+    }
 
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
 
@@ -58,38 +71,47 @@ fun RideConfirmScreen(
             LatLng(
                 result.origin.latitude,
                 result.origin.longitude
-            ), 10f
+            ), 11f
         )
     }
 
+    val driverMinKmMap = mapOf(
+        1 to 1,
+        2 to 5,
+        3 to 10
+    )
 
-    TaxiScaffold {
+    var wrongKm by remember { mutableStateOf(false) }
 
-        LazyColumn (
+
+    if (wrongKm) {
+        CircularProgressIndicator()
+    }
+
+
+    TaxiScaffold { paddingValues ->
+
+        LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .padding(16.dp),
-//            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(paddingValues),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
 
-            item { Spacer(modifier = modifier.height(16.dp)) }
-
-            item {
-                ConfirmRideContent(
-                    rideEstimate = result,
-                    uiState = uiState,
-                )
-            }
-
-
-            item { Spacer(modifier = modifier.height(8.dp)) }
+//            item {
+//                ConfirmRideContent(
+//                    rideEstimate = result,
+//                    uiState = uiState,
+//                )
+//            }
 
             item {
                 GoogleMap(
                     modifier = modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(),
+                        .size(350.dp)
+                        .padding(paddingValues),
                     cameraPositionState = cameraPositionState
                 ) {
                     Marker(
@@ -99,7 +121,7 @@ fun RideConfirmScreen(
                                 result.origin.longitude
                             )
                         ),
-                        title = "Origin"
+                        title = "Origin",
                     )
                     Marker(
                         state = MarkerState(
@@ -113,25 +135,66 @@ fun RideConfirmScreen(
                 }
             }
 
-            item { Spacer(modifier = modifier.height(8.dp)) }
+            item {
 
-            items(result.options) { rideOption ->
-                RideOptionItem(rideOption = rideOption) {
-                    onRideConfirmed(rideOption)
+                Box(
+                    modifier = modifier
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.drivers_available_label),
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
+
+            items(result.options) { rideOption ->
+                RideOptionItem(
+                    rideOption = rideOption,
+                    onRideOptionSelected = {
+                        val minKm = driverMinKmMap[rideOption.id] ?: 0
+                        val distanceKm = uiState.rideEstimate?.let { it.distance / 1000 }
+                        if (distanceKm?.let { it < minKm } == true) {
+                            wrongKm = true
+                        } else {
+                            val currentDate =
+                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
+                                    Date()
+                                )
+                            if (uiState.rideEstimate != null) {
+                                viewModel.confirmRide(
+                                    Ride(
+//                                        id = null,
+                                        date = currentDate,
+                                        origin = uiState.origin,
+                                        destination = uiState.destination,
+                                        distance = uiState.rideEstimate.distance,
+                                        duration = uiState.rideEstimate.duration,
+                                        driver = Driver(
+                                            id = rideOption.id,
+                                            name = rideOption.name
+                                        ),
+                                        value = rideOption.value
+                                    )
+                                )
+                                onRideConfirmed(rideOption)
+                            }
+                        }
+                    }
+                )
+            }
         }
-
     }
-
 }
 
 
 @Composable
-fun ConfirmRideContent(
+private fun ConfirmRideContent(
     modifier: Modifier = Modifier,
     rideEstimate: RideEstimate,
-    uiState: RideEstimateState,
+    uiState: RideConfirmState,
 ) {
     Column(
         modifier = modifier
@@ -253,6 +316,65 @@ fun ConfirmRideContent(
             }
         }
 
+    }
+}
+
+@Composable
+fun RideOptionItem(
+    modifier: Modifier = Modifier,
+    rideOption: RideOption,
+    onRideOptionSelected: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(
+            modifier = modifier
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(text = stringResource(R.string.driver_label), fontWeight = FontWeight.Bold)
+            Box(
+                modifier = modifier
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = rideOption.name, fontWeight = FontWeight.Bold)
+            }
+            Text(text = stringResource(R.string.description_label), fontWeight = FontWeight.Bold)
+            Text(text = rideOption.description)
+            Text(text = stringResource(R.string.vehicle_label), fontWeight = FontWeight.Bold)
+            Text(text = rideOption.vehicle)
+            Row {
+                Text(
+                    text = "${stringResource(R.string.rating_label)}: ",
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = rideOption.review.rating.toString())
+            }
+
+            Row {
+                Text(
+                    text = "${stringResource(R.string.value_label)}: ",
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = rideOption.value.toString())
+            }
+            Box(
+                modifier = modifier
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    onClick = { onRideOptionSelected() }
+                ) {
+                    Text(stringResource(R.string.select_driver_button_label))
+                }
+            }
+
+        }
     }
 }
 

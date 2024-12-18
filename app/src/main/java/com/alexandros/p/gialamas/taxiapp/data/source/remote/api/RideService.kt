@@ -1,8 +1,10 @@
 package com.alexandros.p.gialamas.taxiapp.data.source.remote.api
 
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
+import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryRequest
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistoryResponse
+import kotlinx.coroutines.flow.Flow
 
 interface RideService {
 
@@ -18,4 +20,5 @@ interface RideService {
         customerId: String,
         driverId: Int? = null
     ): RideHistoryResponse
+
 }

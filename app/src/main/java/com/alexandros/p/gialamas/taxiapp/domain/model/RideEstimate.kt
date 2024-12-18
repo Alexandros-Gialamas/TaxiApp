@@ -38,7 +38,7 @@ data class RideOption(
     @SerialName("review")
     val review: Review,
     @SerialName("value")
-    val value: Double
+    val value: Double,
 )
 
 @Serializable

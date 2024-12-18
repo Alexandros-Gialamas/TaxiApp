@@ -5,7 +5,6 @@ import com.alexandros.p.gialamas.taxiapp.data.mapper.toRide
 import com.alexandros.p.gialamas.taxiapp.data.source.local.database.RideDao
 import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideService
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
-import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistoryResponse
 import com.alexandros.p.gialamas.taxiapp.domain.repository.RideRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -21,13 +20,29 @@ class RideRepositoryImpl @Inject constructor(
         rideDao.insertRide(ride.toEntity())
     }
 
-    override fun getRideHistory(customerId: String, driverId: Int): Flow<List<Ride>> {
-        return rideDao.getRideHistory(driverId).map { rideEntities ->
-            rideEntities.map { it.toRide() }
+    override fun getLocalRideHistory(customerId: String, driverId: Int?): Flow<List<Ride>> {
+        val result = if (driverId == null) {
+            rideDao.getAllRides()
+        } else {
+            rideDao.getRideHistory(driverId = driverId)
         }
+
+        return result.map { rideEntities -> rideEntities.map { it.toRide() } }
     }
 
-    suspend fun getRideEstimate(
+
+    override suspend fun getRideHistory(
+        customerId: String,
+        driverId: Int?
+    ) = rideService.getRideHistory(
+        customerId = customerId,
+        driverId = driverId
+    )
+
+
+
+
+    override suspend fun getRideEstimate(
         customerId: String,
         origin: String,
         destination: String
@@ -37,11 +52,7 @@ class RideRepositoryImpl @Inject constructor(
         destination = destination
     )
 
-
     suspend fun confirmRide(ride: Ride) = rideService.confirmRide(ride = ride)
 
-    suspend fun getRideHistory(customerId: String, driverId: Int?): RideHistoryResponse {
-        return rideService.getRideHistory(customerId, driverId)
-    }
 
 }

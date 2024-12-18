@@ -4,10 +4,13 @@ import android.annotation.SuppressLint
 
 @SuppressLint("DefaultLocale")
 fun formatDistance(distance: Double): String {
+
+    val distanceInKm = distance / 1000
+
     val formattedDistance = if (distance % 1 == 0.0) {
-        String.format("%.3f", distance)
+        String.format("%.3f", distanceInKm)
     } else {
-        String.format("%.0f", distance)
+        String.format("%.0f", distanceInKm)
     }
     return "$formattedDistance km"
 }
