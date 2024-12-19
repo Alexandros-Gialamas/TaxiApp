@@ -13,6 +13,9 @@ data class RideEstimateState(
     val customerId: String = "",
     val origin: String = "",
     val destination: String = "",
-    val error: UiText? = null
+    val error: UiText? = null,
+    val isCustomerIdValid: Boolean = true,
+    val isOriginValid: Boolean = true,
+    val isDestinationValid: Boolean = true
 ) : ViewState
 

@@ -1,5 +1,6 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.common
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,19 +22,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AutoCompleteTextField(
     modifier: Modifier = Modifier,
     options: List<String>,
+    onClearClicked : (String) -> Unit,
     onValueChange: (String) -> Unit,
     onOptionSelected: (String) -> Unit,
     keyboardController: SoftwareKeyboardController? = null,
-    label: String
+    label: String,
+    isValid: Boolean
 ) {
 
     var text by remember { mutableStateOf("") }
@@ -60,6 +65,10 @@ fun AutoCompleteTextField(
                     .menuAnchor(
                         type = MenuAnchorType.PrimaryEditable,
                         enabled = text.isBlank()
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (!isValid) Color.Red else Color.Transparent
                     ),
                 maxLines = 3,
                 value = text,
@@ -77,6 +86,7 @@ fun AutoCompleteTextField(
                         IconButton(
                             onClick = {
                                 text = ""
+                                onClearClicked("")
                                 suggestionsVisible = false
                             }
                         ) {

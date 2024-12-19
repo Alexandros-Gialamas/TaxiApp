@@ -1,5 +1,6 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,10 +26,16 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -52,6 +59,7 @@ import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.extractTime
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatDurationTimeToString
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatHistoryDistance
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatValue
+import kotlinx.coroutines.delay
 
 @Composable
 fun RideHistoryScreen(
@@ -63,6 +71,17 @@ fun RideHistoryScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val localRidesCollection = viewModel.localRides.collectAsStateWithLifecycle().value
     val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
+
+    var displayError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null){
+            displayError = true
+            delay(5000L)
+            displayError = false
+        }
+    }
 
 
     TaxiScaffold { paddingValues ->
@@ -113,9 +132,20 @@ fun RideHistoryScreen(
                             AutoCompleteTextField(
                                 options = listOf("CT01"),
                                 keyboardController = keyboardController,
-                                onOptionSelected = { viewModel.updateCustomerId(it) },
-                                onValueChange = { viewModel.updateCustomerId(it) },
-                                label = stringResource(R.string.customer_id_label)
+                                onOptionSelected = {
+                                    viewModel.updateCustomerId(it)
+                                    viewModel.updateIsCustomerIdValid(true)
+                                                   },
+                                onValueChange = {
+                                    viewModel.updateCustomerId(it)
+                                    viewModel.updateIsCustomerIdValid(true)
+                                                },
+                                onClearClicked = {
+                                    viewModel.updateCustomerId(it)
+                                    viewModel.updateIsCustomerIdValid(false)
+                                },
+                                label = stringResource(R.string.customer_id_label),
+                                isValid = uiState.isCustomerIdValid
                             )
 
                             DriverSelector(
@@ -146,6 +176,12 @@ fun RideHistoryScreen(
                     }
                 ) {
                     Text("Get Ride History", fontSize = 16.sp)
+                }
+            }
+
+            if (displayError){
+                item {
+                    DisplayErrorText(uiState = uiState, context = context)
                 }
             }
 
@@ -362,6 +398,31 @@ private fun HistoryRideItem(ride: RideHistory) {
                 Text(text = "$${formatValue(ride.value)}")
             }
         }
+    }
+}
+
+@Composable
+private fun DisplayErrorText(
+    uiState: RideHistoryState,
+    context: Context
+) {
+    uiState.error?.let {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+
+        }
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            text = uiState.error.asString(context),
+            softWrap = true,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 

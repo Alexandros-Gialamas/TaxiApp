@@ -5,6 +5,7 @@ import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistory
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.Driver
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.UiText
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.ViewState
 
 data class RideHistoryState(
@@ -15,5 +16,7 @@ data class RideHistoryState(
     val customerId: String = "",
     val driverId: Int? = Driver.DRIVER_ALL.driverId,
     val driverName: String = Driver.DRIVER_ALL.driverName,
-    val isDriverMenuExpanded: Boolean = false
+    val isDriverMenuExpanded: Boolean = false,
+    val error: UiText? = null,
+    val isCustomerIdValid: Boolean = true
 ) : ViewState
