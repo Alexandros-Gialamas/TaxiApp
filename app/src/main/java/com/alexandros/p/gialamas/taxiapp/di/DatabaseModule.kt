@@ -3,7 +3,7 @@ package com.alexandros.p.gialamas.taxiapp.di
 import android.content.Context
 import androidx.room.Room
 import com.alexandros.p.gialamas.taxiapp.data.source.local.database.TaxiAppDatabase
-import com.alexandros.p.gialamas.taxiapp.util.Constants
+import com.alexandros.p.gialamas.taxiapp.data.util.Constants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,5 +1,6 @@
 package com.alexandros.p.gialamas.taxiapp.data.source.local.database
 
+import android.util.Log
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -11,12 +12,16 @@ import kotlinx.coroutines.flow.Flow
 interface RideDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertRide(ride: RideEntity)
+    suspend fun insertRide(ride: RideEntity){
+        Log.d("RideConfirmDao", "insertRide called with entity: $ride")
+    }
 
-    @Query("SELECT * FROM rides_table")
-    fun getAllRides(): Flow<List<RideEntity>>
+    @Query("SELECT * FROM rides_table WHERE customerId = :customerId")
+    fun getAllRides(customerId: String): Flow<List<RideEntity>>
 
-    @Query("SELECT * FROM rides_table WHERE driverId = :driverId OR :driverId = 0")
-    fun getRideHistory(driverId: Int? = null): Flow<List<RideEntity>>
+
+    @Query("SELECT * FROM rides_table WHERE driverId = :driverId AND customerId = :customerId")
+    fun getLocalRideHistory(customerId: String, driverId: Int?): Flow<List<RideEntity>>
+
 
 }

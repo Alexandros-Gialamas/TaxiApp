@@ -1,9 +1,10 @@
 package com.alexandros.p.gialamas.taxiapp.data.source.remote.api
 
+import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
-import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryRequest
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistoryResponse
+import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.flow.Flow
 
 interface RideService {
@@ -14,7 +15,7 @@ interface RideService {
         destination: String
     ): RideEstimateResponse
 
-    suspend fun confirmRide(ride: Ride): Boolean
+    suspend fun confirmRide(confirmRideRequest: ConfirmRideRequest): Boolean
 
     suspend fun getRideHistory(
         customerId: String,

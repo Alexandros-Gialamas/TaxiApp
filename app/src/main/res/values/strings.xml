@@ -21,6 +21,7 @@
     <string name="description_label">Description</string>
     <string name="vehicle_label">Vehicle</string>
     <string name="rating_label">Rating</string>
+    <string name="comment_label">Comment</string>
     <string name="value_label">Value</string>
 
 

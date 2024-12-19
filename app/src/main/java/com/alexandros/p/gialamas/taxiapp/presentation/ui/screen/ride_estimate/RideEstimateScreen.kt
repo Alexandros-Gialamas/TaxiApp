@@ -99,6 +99,9 @@ fun RideEstimateScreen(
                                 onOptionSelected = { selectedCustomer ->
                                     viewModel.updateCustomerId(selectedCustomer)
                                 },
+                                onValueChange = { newValue ->
+                                    viewModel.updateCustomerId(newValue)
+                                },
                                 label = stringResource(R.string.customer_id_label)
                             )
 
@@ -112,6 +115,9 @@ fun RideEstimateScreen(
                                 onOptionSelected = { selectedOrigin ->
                                     viewModel.updateOrigin(selectedOrigin)
                                 },
+                                onValueChange = { newValue ->
+                                    viewModel.updateOrigin(newValue)
+                                },
                                 label = stringResource(R.string.origin_label)
                             )
 
@@ -120,6 +126,9 @@ fun RideEstimateScreen(
                                 keyboardController = keyboardController,
                                 onOptionSelected = { selectedDestination ->
                                     viewModel.updateDestination(selectedDestination)
+                                },
+                                onValueChange = { newValue ->
+                                    viewModel.updateDestination(newValue)
                                 },
                                 label = stringResource(R.string.destination_label)
                             )
