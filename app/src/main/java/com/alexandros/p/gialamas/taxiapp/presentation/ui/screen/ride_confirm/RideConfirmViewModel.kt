@@ -3,9 +3,9 @@ package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alexandros.p.gialamas.taxiapp.data.mapper.toRide
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
-import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
@@ -64,104 +64,62 @@ class RideConfirmViewModel @Inject constructor(
 
             if (_uiState.value.rideEstimate != null) {
 
-            withContext(Dispatchers.Main) {
-                _uiState.update { it.copy(isLoading = true) }
-            }
-            try {
-                val isSuccess = confirmRideUseCase(
-                    ConfirmRideRequest(
-                        customerId = _uiState.value.customerId,
-                        origin = _uiState.value.origin,
-                        destination = _uiState.value.destination,
-                        distance = _uiState.value.rideEstimate!!.distance,
-                        duration = _uiState.value.rideEstimate!!.duration,
-                        driver = Driver(
-                            id = rideOption.id,
-                            name = rideOption.name
-                        ),
-                        value = rideOption.value
-                    )
+                val ride = ConfirmRideRequest(
+                    customerId = _uiState.value.customerId,
+                    origin = _uiState.value.origin,
+                    destination = _uiState.value.destination,
+                    distance = _uiState.value.rideEstimate!!.distance,
+                    duration = _uiState.value.rideEstimate!!.duration,
+                    driver = Driver(
+                        id = rideOption.id,
+                        name = rideOption.name
+                    ),
+                    value = rideOption.value
                 )
 
-                Log.d("RideConfirmViewModel", "confirmRide API call success: $isSuccess")
-                if (isSuccess) {
-                    val currentDate =
-                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
-                            Date()
-                        )
-                    saveRideUseCase(
-                        Ride(
-//                            id = null,
-                            date = currentDate,
-                            customerId = _uiState.value.customerId,
-                            origin = _uiState.value.origin,
-                            destination = _uiState.value.destination,
-                            distance = _uiState.value.rideEstimate!!.distance,
-                            duration = _uiState.value.rideEstimate!!.duration,
-                            driver = Driver(
-                                id = rideOption.id,
-                                name = rideOption.name
-                            ),
-                            value = rideOption.value
-                        )
-                    )
-                } else {
-                    Unit
-                }
                 withContext(Dispatchers.Main) {
-                    _uiState.update {
-                        it.copy(
-                            rideEstimate = it.rideEstimate,
-                            isLoading = false
+                    _uiState.update { it.copy(isLoading = true) }
+                }
+                try {
+                    val isSuccess = confirmRideUseCase(ride)
+                    Log.d("RideConfirmViewModel", "confirmRide API call success: $isSuccess")
+
+                    if (isSuccess) {
+                        val currentDate =
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
+                                Date()
+                            )
+                        saveRideUseCase(
+                            ride.toRide(
+                                customerId = _uiState.value.customerId,
+                                date = currentDate,
+                                driver = Driver(
+                                    id = rideOption.id,
+                                    name = rideOption.name
+                                )
+                            )
                         )
+                    } else {
+                        Unit
                     }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false
-                        )
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                rideEstimate = it.rideEstimate,
+                                isLoading = false
+                            )
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false
+                            )
+                        }
                     }
                 }
             }
         }
-        }
     }
-
-
-//    fun getRideHistory(
-//        customerId: String,
-//        driverId: Int? = null,
-//    ){
-//        viewModelScope.launch {
-//            _uiState.update {
-//                it.copy(isLoading = true)
-//            }
-//            try {
-//                val rideHistory = driverId?.let {
-//                    getRideHistoryUseCase(
-//                        customerId = customerId,
-//                        driverId = it
-//                    )
-//                }
-//                _uiState.update {
-//                    it.copy(
-//                        rideEstimate = Result.Success(data = rideHistory),
-//                        isLoading = false
-//                    )
-//                }
-//
-//            } catch (e: Exception) {
-//                _uiState.update {
-//                    it.copy(
-//                        rideEstimate = Result.Error(RideHistoryError.Network.NETWORK_ERROR),
-//                        isLoading = false
-//                    )
-//                }
-//
-//            }
-//        }
-//    }
-
 }

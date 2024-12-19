@@ -1,7 +1,6 @@
 package com.alexandros.p.gialamas.taxiapp.domain.usecase
 
 import android.util.Log
-import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.data.repository.RideRepositoryImpl
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import kotlinx.coroutines.flow.Flow

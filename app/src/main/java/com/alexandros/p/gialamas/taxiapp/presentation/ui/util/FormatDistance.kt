@@ -14,3 +14,9 @@ fun formatDistance(distance: Double): String {
     }
     return "$formattedDistance km"
 }
+
+@SuppressLint("DefaultLocale")
+fun formatHistoryDistance(distance: Double): String {
+    val distanceInKm = String.format("%.2f", distance)
+    return "$distanceInKm Km"
+}
