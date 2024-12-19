@@ -25,5 +25,11 @@
     <string name="value_label">Value</string>
 
 
+    // Error Messages
+    <string name="empty_customer_id_field">Please insert a Customer ID</string>
+    <string name="empty_origin_field">Please provide an Origin</string>
+    <string name="empty_destination_field">Please provide a Destination</string>
+
+
 
 </resources>

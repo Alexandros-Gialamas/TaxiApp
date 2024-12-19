@@ -4,15 +4,11 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
-import com.alexandros.p.gialamas.taxiapp.data.repository.RideRepositoryImpl
-import com.alexandros.p.gialamas.taxiapp.domain.error.Result
-import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideHistoryUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.SaveRideUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

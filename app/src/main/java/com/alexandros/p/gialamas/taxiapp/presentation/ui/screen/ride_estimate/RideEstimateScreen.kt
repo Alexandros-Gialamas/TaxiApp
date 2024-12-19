@@ -1,6 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
 
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,8 +16,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -39,6 +46,15 @@ fun RideEstimateScreen(
 
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
+    var displayError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null){
+            displayError = true
+        }
+
+    }
 
 
     TaxiScaffold (
@@ -154,6 +170,12 @@ fun RideEstimateScreen(
             }
         }
 
+            if (displayError){
+                item {
+                    DisplayError(uiState,context)
+                }
+            }
+
             uiState.rideEstimate.let { result ->
                 when (result) {
                     is Result.Error -> {
@@ -217,6 +239,16 @@ private fun RideEstimateButton(
             )
         }
         Spacer(modifier = modifier.height(16.dp))
+    }
+}
+
+@Composable
+fun DisplayError(
+    uiState: RideEstimateState,
+    context: Context
+){
+    uiState.error?.let {
+        Text(text = uiState.error.asString(context))
     }
 }
 

@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
+import com.alexandros.p.gialamas.taxiapp.domain.error.ride_estimate_error.UserDataValidator
+import com.alexandros.p.gialamas.taxiapp.domain.error.ride_estimate_error.ValidationResult
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideEstimateUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,8 +41,8 @@ class RideEstimateViewModel @Inject constructor(
             initialValue = RideEstimateState()
         )
 
-    private val errorChannel = Channel<UiText>()
-    val errors = errorChannel.receiveAsFlow()
+    private val eventChannel = Channel<UserEvent>()
+    val events = eventChannel.receiveAsFlow()
 
     fun updateCustomerId(customerId: String) {
         _uiState.update { it.copy(customerId = customerId) }
@@ -53,6 +54,10 @@ class RideEstimateViewModel @Inject constructor(
 
     fun updateDestination(destination: String) {
         _uiState.update { it.copy(destination = destination) }
+    }
+
+    fun updateError(error: UiText) {
+        _uiState.update { it.copy(error = error) }
     }
 
 
@@ -73,40 +78,55 @@ class RideEstimateViewModel @Inject constructor(
         origin: String,
         destination: String
     ) {
-
         apiRequestJob = Job()
 
-        apiRequestJob?.let {
-            viewModelScope.launch(Dispatchers.IO + apiRequestJob as CompletableJob) {
-                withContext(Dispatchers.Main) {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
-                try {
-                    val rideEstimate = getRideEstimateUseCase(
-                        customerId = customerId,
-                        origin = origin,
-                        destination = destination
-                    )
-                    withContext(Dispatchers.Main) {
-                        _uiState.update {
-                            it.copy(
-                                rideEstimate = Result.Success(data = rideEstimate),
-                                isLoading = false
+        val validationResult = UserDataValidator().validation(customerId, origin, destination)
+
+        when (validationResult) {
+            is ValidationResult.Error -> {
+                updateError(validationResult.error)
+                eventChannel.trySend(UserEvent.Error(validationResult.error))
+            }
+
+            is ValidationResult.Success -> {
+
+                apiRequestJob?.let {
+                    viewModelScope.launch(Dispatchers.IO + apiRequestJob as CompletableJob) {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update { it.copy(isLoading = true) }
+                        }
+                        try {
+                            val rideEstimate = getRideEstimateUseCase(
+                                customerId = customerId,
+                                origin = origin,
+                                destination = destination
                             )
+                            withContext(Dispatchers.Main) {
+                                _uiState.update {
+                                    it.copy(
+                                        rideEstimate = Result.Success(data = rideEstimate),
+                                        isLoading = false
+                                    )
+                                }
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                _uiState.update {
+                                    it.copy(
+                                        rideEstimate = Result.Error(RideEstimateError.Network.NETWORK_ERROR),
+                                        isLoading = false
+                                    )
+                                }
+                            }
                         }
                     }
-                } catch (e: Exception) {
-                    withContext(Dispatchers.Main) {
-                        _uiState.update {
-                            it.copy(
-                                rideEstimate = Result.Error(RideEstimateError.Network.NETWORK_ERROR),
-                                isLoading = false
-                            )
-                        }
-                    }
                 }
+
             }
         }
-
     }
+}
+
+sealed interface UserEvent {
+    data class Error(val error: UiText) : UserEvent
 }
