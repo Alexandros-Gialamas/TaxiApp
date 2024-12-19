@@ -1,12 +1,16 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.repository.RideRepositoryImpl
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
+import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
+import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideHistoryUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.SaveRideUseCase
@@ -20,13 +24,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
 class RideConfirmViewModel @Inject constructor(
     private val confirmRideUseCase: ConfirmRideUseCase,
-    private val saveRideUseCase: SaveRideUseCase,
-    private val repositoryImpl: RideRepositoryImpl
+    private val saveRideUseCase: SaveRideUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<RideConfirmState>(RideConfirmState())
@@ -56,19 +62,57 @@ class RideConfirmViewModel @Inject constructor(
         }
     }
 
-    fun confirmRide(ride: Ride) {
+    fun confirmRide(rideOption: RideOption) {
+        Log.d("RideConfirmViewModel", "confirmRide called with ride: $rideOption")
         viewModelScope.launch(Dispatchers.IO) {
-            withContext(Dispatchers.Main){
+
+            if (_uiState.value.rideEstimate != null) {
+
+            withContext(Dispatchers.Main) {
                 _uiState.update { it.copy(isLoading = true) }
             }
             try {
-                val isSuccess = confirmRideUseCase(ride = ride)
-                if (isSuccess){
-                    saveRideUseCase(ride)
+                val isSuccess = confirmRideUseCase(
+                    ConfirmRideRequest(
+                        customerId = _uiState.value.customerId,
+                        origin = _uiState.value.origin,
+                        destination = _uiState.value.destination,
+                        distance = _uiState.value.rideEstimate!!.distance,
+                        duration = _uiState.value.rideEstimate!!.duration,
+                        driver = Driver(
+                            id = rideOption.id,
+                            name = rideOption.name
+                        ),
+                        value = rideOption.value
+                    )
+                )
+
+                Log.d("RideConfirmViewModel", "confirmRide API call success: $isSuccess")
+                if (isSuccess) {
+                    val currentDate =
+                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
+                            Date()
+                        )
+                    saveRideUseCase(
+                        Ride(
+//                            id = null,
+                            date = currentDate,
+                            customerId = _uiState.value.customerId,
+                            origin = _uiState.value.origin,
+                            destination = _uiState.value.destination,
+                            distance = _uiState.value.rideEstimate!!.distance,
+                            duration = _uiState.value.rideEstimate!!.duration,
+                            driver = Driver(
+                                id = rideOption.id,
+                                name = rideOption.name
+                            ),
+                            value = rideOption.value
+                        )
+                    )
                 } else {
-                        Unit
+                    Unit
                 }
-                withContext(Dispatchers.Main){
+                withContext(Dispatchers.Main) {
                     _uiState.update {
                         it.copy(
                             rideEstimate = it.rideEstimate,
@@ -77,7 +121,7 @@ class RideConfirmViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main){
+                withContext(Dispatchers.Main) {
                     _uiState.update {
                         it.copy(
                             isLoading = false
@@ -85,6 +129,7 @@ class RideConfirmViewModel @Inject constructor(
                     }
                 }
             }
+        }
         }
     }
 

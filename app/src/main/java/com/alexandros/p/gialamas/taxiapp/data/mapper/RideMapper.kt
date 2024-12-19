@@ -8,6 +8,7 @@ fun Ride.toEntity(): RideEntity{
     return RideEntity(
         id = this.id ?: 0,
         date = this.date,
+        customerId = this.customerId,
         origin = this.origin,
         destination = this.destination,
         distance = this.distance,
@@ -22,6 +23,7 @@ fun RideEntity.toRide(): Ride{
     return Ride(
         id = this.id,
         date = this.date,
+        customerId = this.customerId,
         origin = this.origin,
         destination = this.destination,
         distance = this.distance,

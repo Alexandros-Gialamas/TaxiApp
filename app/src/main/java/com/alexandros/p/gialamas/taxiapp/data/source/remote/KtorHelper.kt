@@ -19,7 +19,9 @@ object KtorHelper {
                     prettyPrint = true
                     isLenient = true
                     ignoreUnknownKeys = true
-                })
+                    explicitNulls = false
+                }
+                )
             }
 
             install(Logging) {

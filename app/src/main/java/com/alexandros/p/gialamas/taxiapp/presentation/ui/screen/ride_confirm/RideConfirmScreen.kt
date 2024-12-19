@@ -1,10 +1,10 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,8 +41,6 @@ import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatDurationToRe
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
@@ -81,7 +80,15 @@ fun RideConfirmScreen(
         3 to 10
     )
 
+    val context = LocalContext.current
     var wrongKm by remember { mutableStateOf(false) }
+    LaunchedEffect(wrongKm) {
+        if (wrongKm) {
+            Toast.makeText(context, "Invalid Distance", Toast.LENGTH_SHORT).show()
+            wrongKm = false
+        }
+    }
+
 
 
     if (wrongKm) {
@@ -159,26 +166,9 @@ fun RideConfirmScreen(
                         if (distanceKm?.let { it < minKm } == true) {
                             wrongKm = true
                         } else {
-                            val currentDate =
-                                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
-                                    Date()
-                                )
+
                             if (uiState.rideEstimate != null) {
-                                viewModel.confirmRide(
-                                    Ride(
-//                                        id = null,
-                                        date = currentDate,
-                                        origin = uiState.origin,
-                                        destination = uiState.destination,
-                                        distance = uiState.rideEstimate.distance,
-                                        duration = uiState.rideEstimate.duration,
-                                        driver = Driver(
-                                            id = rideOption.id,
-                                            name = rideOption.name
-                                        ),
-                                        value = rideOption.value
-                                    )
-                                )
+                                viewModel.confirmRide(rideOption)
                                 onRideConfirmed(rideOption)
                             }
                         }
@@ -353,6 +343,15 @@ fun RideOptionItem(
                     fontWeight = FontWeight.Bold
                 )
                 Text(text = rideOption.review.rating.toString())
+            }
+
+            if (rideOption.review.comment.isNotBlank()){
+
+                    Text(
+                        text = stringResource(R.string.comment_label), fontWeight = FontWeight.Bold
+                    )
+                    Text(text = rideOption.review.comment)
+
             }
 
             Row {

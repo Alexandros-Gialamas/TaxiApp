@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.util
+package com.alexandros.p.gialamas.taxiapp.data.util
 
 object Constants {
 

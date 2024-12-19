@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 fun AutoCompleteTextField(
     modifier: Modifier = Modifier,
     options: List<String>,
+    onValueChange: (String) -> Unit,
     onOptionSelected: (String) -> Unit,
     keyboardController: SoftwareKeyboardController? = null,
     label: String
@@ -43,8 +44,8 @@ fun AutoCompleteTextField(
 
     Column(
         modifier = modifier
-            .fillMaxWidth(0.9f)
-            .padding(8.dp),
+            .fillMaxWidth(0.9f),
+//            .padding(8.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -66,6 +67,7 @@ fun AutoCompleteTextField(
             value = text,
             onValueChange = {
                 text = it
+                onValueChange(it)
                 suggestionsVisible = true
             },
             label = { Text(label) },
