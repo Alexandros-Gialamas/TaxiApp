@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
+import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetLocalRideHistoryUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,8 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -38,6 +40,21 @@ class RideHistoryViewModel @Inject constructor(
             initialValue = RideHistoryState()
         )
 
+    val localRides: StateFlow<Result<List<Ride>, RideHistoryError>> =
+        getLocalRideHistoryUseCase(_uiState.value.customerId, _uiState.value.driverId)
+            .map {
+                Result.Success<List<Ride>, RideHistoryError>(it)
+            }
+            .catch {
+                Result.Error<List<Ride>, RideHistoryError>(
+                    RideHistoryError.Local.LOCAL_ERROR
+                )
+            }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = Result.Idle
+        )
 
     fun getRideHistory(customerId: String, driverId: Int?) {
         Log.d("fetchRides", "getRideHistory called with customerId: $customerId, driverId: $driverId")
@@ -125,7 +142,7 @@ fun updateCustomerId(customerId: String) {
     _uiState.update { it.copy(customerId = customerId) }
 }
 
-fun updateDriver(driverId: Int, driverName: String) {
+fun updateDriver(driverId: Int?, driverName: String) {
     _uiState.update {
         it.copy(
             driverId = driverId,

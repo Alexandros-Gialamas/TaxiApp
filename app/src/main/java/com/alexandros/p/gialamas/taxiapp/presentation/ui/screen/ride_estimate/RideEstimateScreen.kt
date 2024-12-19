@@ -1,6 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
 
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,8 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,24 +43,41 @@ fun RideEstimateScreen(
 
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
+    val imagePresentation = if (uiState.isLoading){
+        painterResource(R.drawable.taking_a_ride)
+    } else {
+        painterResource(R.drawable.search_ride)
+    }
 
 
-    TaxiScaffold (
+    TaxiScaffold(
         modifier = modifier
             .fillMaxSize()
-    ){ paddingValues ->
+    ) { paddingValues ->
 
-        LazyColumn (
+        LazyColumn(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             item {
                 Spacer(modifier = modifier.height(16.dp))
             }
+
+            item {
+                Image(
+                    modifier = modifier
+                        .fillMaxWidth(),
+                    painter = imagePresentation,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alignment = Alignment.Center
+                )
+            }
+
 
             item {
                 Card(
@@ -66,101 +87,115 @@ fun RideEstimateScreen(
                 ) {
                     Column(
                         modifier = modifier
+                            .fillMaxWidth()
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        if (uiState.isLoading) {
-                            Box(
-                                modifier = modifier,
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
+                        when {
+                            uiState.isLoading -> {
+
+                                Box(
                                     modifier = modifier,
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        modifier = modifier,
+                                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text("Waiting the response...")
+
+                                        CircularProgressIndicator()
+
+                                        RideEstimateButton(
+                                            uiState = uiState,
+                                            keyboardController = keyboardController,
+                                            cancelRequest = { viewModel.cancelApiRequest() },
+                                            confirmRequest = { }
+                                        )
+                                    }
+                                }
+                            }
+                            !uiState.isLoading -> {
+                                Column(
+                                    modifier = modifier
+                                        .fillMaxWidth(),
                                     verticalArrangement = Arrangement.spacedBy(24.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Text("Waiting for the response...")
-
-                                    CircularProgressIndicator()
-
-                                    RideEstimateButton(
-                                        uiState = uiState,
+                                    AutoCompleteTextField(
+                                        options = listOf("CT01"),
                                         keyboardController = keyboardController,
-                                        cancelRequest = { viewModel.cancelApiRequest() },
-                                        confirmRequest = { }
+                                        onOptionSelected = { selectedCustomer ->
+                                            viewModel.updateCustomerId(selectedCustomer)
+                                        },
+                                        onValueChange = { newValue ->
+                                            viewModel.updateCustomerId(newValue)
+                                        },
+                                        label = stringResource(R.string.customer_id_label)
+                                    )
+
+                                    AutoCompleteTextField(
+                                        options = listOf(
+                                            "Av. Pres. Kenedy, 2385 - Remédios, Osasco - SP, 02675-031",
+                                            "Av. Thomas Edison, 365 - Barra Funda, São Paulo - SP, 01140-000",
+                                            "Av. Brasil, 2033 - Jardim America, São Paulo - SP, 01431-001"
+                                        ),
+                                        keyboardController = keyboardController,
+                                        onOptionSelected = { selectedOrigin ->
+                                            viewModel.updateOrigin(selectedOrigin)
+                                        },
+                                        onValueChange = { newValue ->
+                                            viewModel.updateOrigin(newValue)
+                                        },
+                                        label = stringResource(R.string.origin_label)
+                                    )
+
+                                    AutoCompleteTextField(
+                                        options = listOf("Av. Paulista, 1538 - Bela Vista, São Paulo - SP, 01310-200"),
+                                        keyboardController = keyboardController,
+                                        onOptionSelected = { selectedDestination ->
+                                            viewModel.updateDestination(selectedDestination)
+                                        },
+                                        onValueChange = { newValue ->
+                                            viewModel.updateDestination(newValue)
+                                        },
+                                        label = stringResource(R.string.destination_label)
                                     )
                                 }
                             }
-                        } else {
-                            AutoCompleteTextField(
-                                options = listOf("CT01"),
-                                keyboardController = keyboardController,
-                                onOptionSelected = { selectedCustomer ->
-                                    viewModel.updateCustomerId(selectedCustomer)
-                                },
-                                onValueChange = { newValue ->
-                                    viewModel.updateCustomerId(newValue)
-                                },
-                                label = stringResource(R.string.customer_id_label)
-                            )
-
-                            AutoCompleteTextField(
-                                options = listOf(
-                                    "Av. Pres. Kenedy, 2385 - Remédios, Osasco - SP, 02675-031",
-                                    "Av. Thomas Edison, 365 - Barra Funda, São Paulo - SP, 01140-000",
-                                    "Av. Brasil, 2033 - Jardim America, São Paulo - SP, 01431-001"
-                                ),
-                                keyboardController = keyboardController,
-                                onOptionSelected = { selectedOrigin ->
-                                    viewModel.updateOrigin(selectedOrigin)
-                                },
-                                onValueChange = { newValue ->
-                                    viewModel.updateOrigin(newValue)
-                                },
-                                label = stringResource(R.string.origin_label)
-                            )
-
-                            AutoCompleteTextField(
-                                options = listOf("Av. Paulista, 1538 - Bela Vista, São Paulo - SP, 01310-200"),
-                                keyboardController = keyboardController,
-                                onOptionSelected = { selectedDestination ->
-                                    viewModel.updateDestination(selectedDestination)
-                                },
-                                onValueChange = { newValue ->
-                                    viewModel.updateDestination(newValue)
-                                },
-                                label = stringResource(R.string.destination_label)
-                            )
                         }
                     }
                 }
             }
 
             if (!uiState.isLoading) {
-            item {
-                RideEstimateButton(
-                    uiState = uiState,
-                    keyboardController = keyboardController,
-                    cancelRequest = { },
-                    confirmRequest = {
-                        viewModel.getRideEstimate(
-                            customerId = uiState.customerId,
-                            origin = uiState.origin,
-                            destination = uiState.destination
-                        )
-                    }
-                )
+                item {
+                    RideEstimateButton(
+                        uiState = uiState,
+                        keyboardController = keyboardController,
+                        cancelRequest = { },
+                        confirmRequest = {
+                            viewModel.getRideEstimate(
+                                customerId = uiState.customerId,
+                                origin = uiState.origin,
+                                destination = uiState.destination,
+                                context = context
+                            )
+                        }
+                    )
+                }
             }
-        }
 
             uiState.rideEstimate.let { result ->
                 when (result) {
                     is Result.Error -> {
-                       item {
-                           Text("Error: ${result.error}")
-                       }
+                        item {
+                            Text("Error: ${result.error}")
+                        }
                     }
+
                     is Result.Success -> {
                         onRideSelected(
                             result.data,
@@ -168,7 +203,9 @@ fun RideEstimateScreen(
                             uiState.origin,
                             uiState.destination
                         )
+                        viewModel.updateLoadingState(false)
                     }
+
                     else -> {}
                 }
             }

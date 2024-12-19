@@ -1,12 +1,9 @@
 package com.alexandros.p.gialamas.taxiapp.domain.repository
 
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
-import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
-import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistoryResponse
-import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.flow.Flow
 
 interface RideRepository {

@@ -4,7 +4,6 @@ import android.util.Log
 import com.alexandros.p.gialamas.taxiapp.data.mapper.toEntity
 import com.alexandros.p.gialamas.taxiapp.data.mapper.toRide
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
-import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.data.source.local.database.RideDao
 import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideService
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
