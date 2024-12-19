@@ -11,6 +11,7 @@ import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.RideConfirmScreen
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideEstimateScreen
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.RideHistoryScreen
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.splash.SplashScreen
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
@@ -32,8 +33,16 @@ fun NavigationController() {
 
     NavHost(
         navController = navController,
-        startDestination = Screens.RideEstimateScreen,
+        startDestination = Screens.SplashScreen,
     ) {
+
+        composable<Screens.SplashScreen> {
+            SplashScreen(
+                navigateToRideEstimateScreen = {
+                    navController.navigate(Screens.RideEstimateScreen)
+                }
+            )
+        }
 
 
         composable<Screens.RideEstimateScreen> {
@@ -60,6 +69,9 @@ fun NavigationController() {
                 customerId = args.customerId,
                 origin = args.origin,
                 destination = args.destination,
+                onBackPress = {
+                    navController.navigate(Screens.RideEstimateScreen)
+                },
                 onRideConfirmed = { rideOption ->
                     navController.navigate(Screens.RideHistoryScreen(rideOption))
                 }
@@ -82,6 +94,9 @@ fun NavigationController() {
 
 @Serializable
 sealed class Screens {
+
+    @Serializable
+    data object SplashScreen : Screens()
 
     @Serializable
     data object RideEstimateScreen : Screens()

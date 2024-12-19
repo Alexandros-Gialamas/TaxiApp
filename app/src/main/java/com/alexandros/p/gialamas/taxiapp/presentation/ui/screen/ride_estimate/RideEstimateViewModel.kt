@@ -1,10 +1,11 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alexandros.p.gialamas.taxiapp.data.util.checkInternetConnectivity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideEstimateUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,6 +56,10 @@ class RideEstimateViewModel @Inject constructor(
         _uiState.update { it.copy(destination = destination) }
     }
 
+    fun updateLoadingState(loadingState: Boolean) {
+        _uiState.update { it.copy(isLoading = loadingState) }
+    }
+
 
     private var apiRequestJob: Job? = null
 
@@ -69,10 +74,12 @@ class RideEstimateViewModel @Inject constructor(
     }
 
     fun getRideEstimate(
+        context: Context,
         customerId: String,
         origin: String,
-        destination: String
+        destination: String,
     ) {
+        val networkConnectivity = checkInternetConnectivity(context)  // TODO { handle the error case }
 
         apiRequestJob = Job()
 
@@ -90,8 +97,7 @@ class RideEstimateViewModel @Inject constructor(
                     withContext(Dispatchers.Main) {
                         _uiState.update {
                             it.copy(
-                                rideEstimate = Result.Success(data = rideEstimate),
-                                isLoading = false
+                                rideEstimate = Result.Success(data = rideEstimate)
                             )
                         }
                     }

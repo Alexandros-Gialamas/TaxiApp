@@ -28,3 +28,22 @@ fun formatDurationToReadableString(duration: Int): String {
 
     return result.toString().trim()
 }
+
+fun formatDurationTimeToString(duration: String): String {
+
+    val timeParts = duration.split(":")
+
+    if (timeParts.size != 2) {
+        return duration
+    }
+
+    val minutes = timeParts[0].toInt()
+    val seconds = timeParts[1].toInt()
+
+    return when {
+        minutes == 0 -> "$seconds seconds"
+        seconds == 0 -> "$minutes minutes"
+        else -> "$minutes minutes $seconds seconds"
+    }
+
+}
