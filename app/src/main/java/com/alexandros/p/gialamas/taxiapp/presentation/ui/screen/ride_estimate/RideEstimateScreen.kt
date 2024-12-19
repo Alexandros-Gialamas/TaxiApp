@@ -1,6 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
 
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -24,6 +30,8 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -33,6 +41,7 @@ import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.AutoCompleteTextField
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiScaffold
+import kotlinx.coroutines.delay
 
 @Composable
 fun RideEstimateScreen(
@@ -50,6 +59,15 @@ fun RideEstimateScreen(
         painterResource(R.drawable.search_ride)
     }
 
+    var displayError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null){
+            displayError = true
+            delay(5000L)
+            displayError = false
+        }
+    }
 
     TaxiScaffold(
         modifier = modifier
@@ -129,11 +147,18 @@ fun RideEstimateScreen(
                                         keyboardController = keyboardController,
                                         onOptionSelected = { selectedCustomer ->
                                             viewModel.updateCustomerId(selectedCustomer)
+                                            viewModel.updateIsCustomerIdValid(true)
                                         },
                                         onValueChange = { newValue ->
                                             viewModel.updateCustomerId(newValue)
+                                            viewModel.updateIsCustomerIdValid(true)
                                         },
-                                        label = stringResource(R.string.customer_id_label)
+                                        onClearClicked = { newValue ->
+                                            viewModel.updateCustomerId(newValue)
+                                            viewModel.updateIsCustomerIdValid(false)
+                                        },
+                                        label = stringResource(R.string.customer_id_label),
+                                        isValid = uiState.isCustomerIdValid
                                     )
 
                                     AutoCompleteTextField(
@@ -145,11 +170,18 @@ fun RideEstimateScreen(
                                         keyboardController = keyboardController,
                                         onOptionSelected = { selectedOrigin ->
                                             viewModel.updateOrigin(selectedOrigin)
+                                            viewModel.updateIsOriginValid(true)
                                         },
                                         onValueChange = { newValue ->
                                             viewModel.updateOrigin(newValue)
+                                            viewModel.updateIsOriginValid(true)
                                         },
-                                        label = stringResource(R.string.origin_label)
+                                        onClearClicked = { newValue ->
+                                            viewModel.updateOrigin(newValue)
+                                            viewModel.updateIsOriginValid(false)
+                                        },
+                                        label = stringResource(R.string.origin_label),
+                                        isValid = uiState.isOriginValid
                                     )
 
                                     AutoCompleteTextField(
@@ -157,11 +189,18 @@ fun RideEstimateScreen(
                                         keyboardController = keyboardController,
                                         onOptionSelected = { selectedDestination ->
                                             viewModel.updateDestination(selectedDestination)
+                                            viewModel.updateIsDestinationValid(true)
                                         },
                                         onValueChange = { newValue ->
                                             viewModel.updateDestination(newValue)
+                                            viewModel.updateIsDestinationValid(true)
                                         },
-                                        label = stringResource(R.string.destination_label)
+                                        onClearClicked = { newValue ->
+                                            viewModel.updateDestination(newValue)
+                                            viewModel.updateIsDestinationValid(false)
+                                        },
+                                        label = stringResource(R.string.destination_label),
+                                        isValid = uiState.isDestinationValid
                                     )
                                 }
                             }
@@ -185,6 +224,12 @@ fun RideEstimateScreen(
                             )
                         }
                     )
+                }
+            }
+
+            if (displayError){
+                item {
+                    DisplayErrorText(uiState = uiState, context = context)
                 }
             }
 
@@ -257,6 +302,30 @@ private fun RideEstimateButton(
     }
 }
 
+@Composable
+private fun DisplayErrorText(
+    uiState: RideEstimateState,
+    context: Context
+) {
+    uiState.error?.let {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+
+        }
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            text = uiState.error.asString(context),
+            softWrap = true,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
 
 
 
