@@ -19,7 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alexandros.p.gialamas.taxiapp.R
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiScaffold
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiAppScaffold
 import kotlinx.coroutines.delay
 
 @Composable
@@ -33,7 +33,7 @@ fun SplashScreen(
         navigateToRideEstimateScreen()
     }
 
-    TaxiScaffold {
+    TaxiAppScaffold {
 
         Box(
             modifier = modifier

@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.presentation.ui.util
+package com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation
 
 import android.content.Context
 import androidx.annotation.StringRes

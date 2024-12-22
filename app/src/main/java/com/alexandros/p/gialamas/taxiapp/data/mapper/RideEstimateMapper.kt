@@ -5,7 +5,7 @@ import com.alexandros.p.gialamas.taxiapp.domain.model.Location
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 
-fun RideEstimateResponse.toRideEstimate(): RideEstimate {
+fun RideEstimateResponse.EstimateResponse.toRideEstimate(): RideEstimate {
     return RideEstimate(
         origin = Location(
             latitude = this.origin.latitude,

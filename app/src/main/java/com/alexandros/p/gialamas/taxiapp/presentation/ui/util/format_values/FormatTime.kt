@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.presentation.ui.util
+package com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values
 
 import android.annotation.SuppressLint
 import java.text.SimpleDateFormat

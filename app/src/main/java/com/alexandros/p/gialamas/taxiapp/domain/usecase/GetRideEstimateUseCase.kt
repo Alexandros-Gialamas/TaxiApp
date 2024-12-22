@@ -1,23 +1,23 @@
 package com.alexandros.p.gialamas.taxiapp.domain.usecase
 
-import com.alexandros.p.gialamas.taxiapp.data.mapper.toRideEstimate
-import com.alexandros.p.gialamas.taxiapp.data.repository.RideRepositoryImpl
-import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
+import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
+import com.alexandros.p.gialamas.taxiapp.domain.error.Result
+import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
+import com.alexandros.p.gialamas.taxiapp.domain.repository.RideRepository
 import javax.inject.Inject
 
 class GetRideEstimateUseCase @Inject constructor(
-    private val rideRepositoryImpl: RideRepositoryImpl
+    private val rideRepository: RideRepository
 ) {
 
     suspend operator fun invoke(
         customerId: String,
         origin: String,
         destination: String
-    ) : RideEstimate =
-        rideRepositoryImpl.getRideEstimate(
+    ): Result<RideEstimateResponse, RideEstimateError.Network> = rideRepository.getRideEstimate(
             customerId = customerId,
             origin = origin,
             destination = destination
-        ).toRideEstimate()
+        )
 
 }
