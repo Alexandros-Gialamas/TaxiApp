@@ -25,10 +25,4 @@ data class RideHistory (
 
 
 
-@Serializable
-data class RideHistoryResponse(
-    @SerialName("customer_id")
-    val customerId: String,
-    @SerialName("rides")
-    val rides: List<RideHistory>
-)
+

@@ -73,6 +73,9 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:3.0.0")
     testImplementation("io.ktor:ktor-client-mock:3.0.0")
 
+    // Gson
+    implementation ("com.google.code.gson:gson:2.11.0")
+
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.52")
     ksp("com.google.dagger:hilt-android-compiler:2.52")
@@ -85,6 +88,9 @@ dependencies {
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Timber Logging
+    implementation(libs.timber)
 
 
     implementation(libs.androidx.core.ktx)

@@ -2,7 +2,7 @@
     <string name="app_name">TaxiApp</string>
 
 
-    // Ride Estimate Screen
+
     <string name="customer_id_label">Customer ID</string>
     <string name="origin_label">Origin</string>
     <string name="origin_location_label">Origin location</string>
@@ -13,6 +13,7 @@
     <string name="longitude_label">Longitude</string>
     <string name="duration_label">Duration</string>
     <string name="ride_estimate_button_label">Get Ride Estimate</string>
+    <string name="ride_history_button_label">Get Ride History</string>
     <string name="cancel_button_label">Cancel</string>
     <string name="new_ride_button_label">New Ride</string>
     <string name="drivers_available_label">Available Drivers</string>
@@ -26,10 +27,18 @@
 
 
     // Error Messages
-    <string name="empty_customer_id_field">Please insert a Customer ID</string>
-    <string name="empty_origin_field">Please provide an Origin</string>
-    <string name="empty_destination_field">Please provide a Destination</string>
-
+    <string name="empty_customer_id_field">"Customer ID" field is empty!</string>
+    <string name="empty_origin_field">"Origin" field is empty!</string>
+    <string name="empty_destination_field">"Destination" field is empty!</string>
+    <string name="network_error">Network error. Please check your connection.</string>
+    <string name="invalid_data_error">Invalid data provided. Please check your input.</string>
+    <string name="invalid_location_error">Invalid data provided. Please check both location input.</string>
+    <string name="invalid_customer_error">Invalid Customer ID provided. Please check the Customer ID input.</string>
+    <string name="driver_not_found_error">Driver not found. Please select a different driver.</string>
+    <string name="invalid_distance_error">Invalid distance for the selected driver.</string>
+    <string name="no_rides_found_error">No rides found with the specific parameters.</string>
+    <string name="unknown_error">An unexpected error occurred. Please try again later.</string>
+    <string name="local_error">Local error</string>
 
 
 </resources>

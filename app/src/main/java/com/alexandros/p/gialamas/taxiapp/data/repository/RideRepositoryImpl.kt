@@ -5,7 +5,7 @@ import com.alexandros.p.gialamas.taxiapp.data.mapper.toEntity
 import com.alexandros.p.gialamas.taxiapp.data.mapper.toRide
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.source.local.database.RideDao
-import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideService
+import com.alexandros.p.gialamas.taxiapp.domain.remote.api.RideService
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.repository.RideRepository
 import kotlinx.coroutines.flow.Flow

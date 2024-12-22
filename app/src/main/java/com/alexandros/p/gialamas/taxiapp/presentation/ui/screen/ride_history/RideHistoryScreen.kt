@@ -2,27 +2,31 @@ package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history
 
 import android.content.Context
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -33,10 +37,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -52,13 +61,14 @@ import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistory
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.AutoCompleteTextField
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiScaffold
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.Driver
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.extractDate
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.extractTime
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatDurationTimeToString
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatHistoryDistance
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.formatValue
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiAppScaffold
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Customer
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Driver
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractDate
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractTime
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatDurationTimeToString
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatHistoryDistance
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatValue
 import kotlinx.coroutines.delay
 
 @Composable
@@ -69,127 +79,165 @@ fun RideHistoryScreen(
 ) {
 
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
-    val localRidesCollection = viewModel.localRides.collectAsStateWithLifecycle().value
+//    val localRidesCollection = viewModel.localRides.collectAsStateWithLifecycle().value
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
     var displayError by remember { mutableStateOf(false) }
+    var debounce by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.error) {
-        if (uiState.error != null){
+        if (uiState.error != null) {
             displayError = true
             delay(5000L)
             displayError = false
         }
     }
 
+    LaunchedEffect(debounce) {
+        if (debounce) {
+            viewModel.cancelApiRequest()
+            debounce = false
+        }
+    }
 
-    TaxiScaffold { paddingValues ->
 
-        LazyColumn(
+
+    TaxiAppScaffold { paddingValues ->
+
+        Box(
             modifier = modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .background(Color.Gray),
+            contentAlignment = Alignment.Center
         ) {
-            item {
-                Spacer(modifier = modifier.height(16.dp))
-            }
 
-            item {
-                Image(
-                    modifier = modifier
-                        .fillMaxWidth(),
-                    painter = painterResource(R.drawable.search_history),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    alignment = Alignment.Center
-                )
-            }
+            Image(
+                modifier = modifier
+                    .fillMaxSize()
+                    .alpha(0.1f),
+                painter = painterResource(R.drawable.splash_screen),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.TopCenter
+            )
 
-            item {
-                Column(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
-                    Card(
+                item {
+                    Image(
                         modifier = modifier
                             .fillMaxWidth()
-                            .padding(8.dp)
-                    ) {
-                        Column(
-                            modifier = modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            AutoCompleteTextField(
-                                options = listOf("CT01"),
-                                keyboardController = keyboardController,
-                                onOptionSelected = {
-                                    viewModel.updateCustomerId(it)
-                                    viewModel.updateIsCustomerIdValid(true)
-                                                   },
-                                onValueChange = {
-                                    viewModel.updateCustomerId(it)
-                                    viewModel.updateIsCustomerIdValid(true)
-                                                },
-                                onClearClicked = {
-                                    viewModel.updateCustomerId(it)
-                                    viewModel.updateIsCustomerIdValid(false)
-                                },
-                                label = stringResource(R.string.customer_id_label),
-                                isValid = uiState.isCustomerIdValid
-                            )
+                            .heightIn(max = 280.dp),
+                        painter = painterResource(R.drawable.search_history),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        alignment = Alignment.TopCenter
+                    )
+                }
 
-                            DriverSelector(
-                                uiState = uiState,
-                                onExpandedChange = { viewModel.toggleDriverMenu(it) },
-                                onDismiss = { viewModel.toggleDriverMenu(it) },
-                                onDriverSelected = { driver ->
-                                    viewModel.updateDriver(
-                                        driverId = driver.driverId,
-                                        driverName = driver.driverName
-                                    )
-                                }
-                            )
+                item {
+                    Column(
+                        modifier = modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Card(
+                            modifier = modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    color = Color.DarkGray,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .fillMaxWidth(0.9f)
+                                .padding(8.dp)
+                        ) {
+                            Column(
+                                modifier = modifier
+                                    .background(Color.DarkGray)
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                AutoCompleteTextField(
+                                    options = Customer.entries.toTypedArray(),
+                                    keyboardController = keyboardController,
+                                    onOptionSelected = {
+                                        viewModel.updateCustomerId(it.customerId)
+                                        viewModel.updateIsCustomerIdValid(true)
+                                    },
+                                    optionToString = { it.customerId },
+                                    onValueChange = {
+                                        viewModel.updateCustomerId(it)
+                                        viewModel.updateIsCustomerIdValid(true)
+                                    },
+                                    onClearClicked = {
+                                        viewModel.updateCustomerId(it)
+                                        viewModel.updateIsCustomerIdValid(false)
+                                    },
+                                    label = stringResource(R.string.customer_id_label),
+                                    isValid = uiState.isCustomerIdValid
+                                )
+
+                                DriverSelector(
+                                    uiState = uiState,
+                                    keyboardController = keyboardController,
+                                    onExpandedChange = { viewModel.toggleDriverMenu(it) },
+                                    onDismiss = { viewModel.toggleDriverMenu(it) },
+                                    onDriverSelected = { driver ->
+                                        viewModel.updateDriver(
+                                            driverId = driver.driverId,
+                                            driverName = driver.driverName
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 }
-            }
 
 
 
-            item {
-                Button(
-                    onClick = {
-                        viewModel.getRideHistory(
-                            customerId = uiState.customerId,
-                            driverId = uiState.driverId
-                        )
+                item {
+                    RideHistoryButton(
+                        uiState = uiState,
+                        keyboardController = keyboardController,
+                        cancelRequest = {
+                            debounce = true
+                        },
+                        confirmRequest = {
+                            viewModel.getRideHistory(
+                                customerId = uiState.customerId,
+                                driverId = uiState.driverId,
+                                context = context
+                            )
+                        }
+                    )
+                }
+
+
+                if (displayError) {
+                    item {
+                        DisplayErrorText(uiState = uiState, context = context)
                     }
-                ) {
-                    Text("Get Ride History", fontSize = 16.sp)
                 }
-            }
 
-            if (displayError){
-                item {
-                    DisplayErrorText(uiState = uiState, context = context)
+                if (uiState.isLocalLoading || uiState.isNetworkLoading) {
+                    item {
+                        CircularProgressIndicator(color = if (uiState.isLocalLoading) Color.Red else Color.White)
+                    }
                 }
-            }
-
-            if (uiState.isLocalLoading || uiState.isNetworkLoading) {
-                item {
-                    CircularProgressIndicator(color = if (uiState.isLocalLoading) Color.Red else Color.Unspecified)
-                }
-            }
 
 //            uiState.localRides?.let { data ->
 //                when (data) {
@@ -207,96 +255,38 @@ fun RideHistoryScreen(
 //                }
 //            }
 
-            when (localRidesCollection) {
-                is Result.Error -> {
+//            when (localRidesCollection) {
+//                is Result.Error -> {
+//
+//                }
+//
+//                is Result.Success -> {
+//                    items(localRidesCollection.data) { ride ->
+//                        LocalRideItem(ride)
+//                    }
+//                }
+//
+//                else -> {}
+//            }
 
-                }
 
-                is Result.Success -> {
-                    items(localRidesCollection.data) { ride ->
-                        LocalRideItem(ride)
-                    }
-                }
-
-                else -> {}
-            }
-
-            uiState.rideHistory?.let { result ->
-                when (result) {
-                    is Result.Error -> {
-
-                    }
-
-                    is Result.Success -> {
-                        items(result.data) { rideHistory ->
-                            SelectionContainer {
-                                HistoryRideItem(rideHistory)
+                uiState.rideHistory?.let { result ->
+                    when (result) {
+                        is Result.Error -> {
+                            item {
+                                DisplayErrorText(uiState = uiState, context = context)
                             }
                         }
-                    }
 
-                    else -> {}
+                        is Result.Success -> {
+                            items(result.data) { rideHistory ->
+                                HistoryRideItem(rideHistory as RideHistory)
+                            }
+                        }
+
+                        else -> {}
+                    }
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DriverSelector(
-    modifier: Modifier = Modifier,
-    uiState: RideHistoryState,
-    onExpandedChange: (Boolean) -> Unit,
-    onDismiss: (Boolean) -> Unit,
-    onDriverSelected: (Driver) -> Unit
-) {
-
-    ExposedDropdownMenuBox(
-        expanded = uiState.isDriverMenuExpanded,
-        onExpandedChange = {
-            onExpandedChange(it)
-        },
-    ) {
-
-        TextField(
-            modifier = modifier
-                .fillMaxWidth(0.9f)
-                .menuAnchor(
-                    type = MenuAnchorType.PrimaryNotEditable,
-                ),
-            readOnly = true,
-            value = uiState.driverName,
-            onValueChange = {},
-            textStyle = TextStyle(
-                textAlign = TextAlign.Center
-            ),
-            label = { Text("Select Driver") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = uiState.isDriverMenuExpanded)
-            }
-        )
-        ExposedDropdownMenu(
-            expanded = uiState.isDriverMenuExpanded,
-            onDismissRequest = { onDismiss(false) }
-        ) {
-            Driver.entries.forEach { driver ->
-                DropdownMenuItem(
-                    modifier = modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        onDriverSelected(driver)
-                        onDismiss(false)
-                    },
-                    text = {
-                        Text(
-                            modifier = modifier.fillMaxWidth(),
-                            text = driver.driverName,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                )
             }
         }
     }
@@ -329,13 +319,20 @@ private fun LocalRideItem(ride: Ride) {
 
 @Composable
 private fun HistoryRideItem(ride: RideHistory) {
+
+    val textColor = Color.White
+
     Card(
         modifier = Modifier
-            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(color = Color.DarkGray, shape = RoundedCornerShape(16.dp))
+            .fillMaxWidth(0.9f)
             .padding(16.dp)
     ) {
         Column(
             modifier = Modifier
+                .background(Color.DarkGray)
+                .fillMaxWidth()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -344,58 +341,175 @@ private fun HistoryRideItem(ride: RideHistory) {
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Ride ID: ${ride.id}", fontWeight = FontWeight.Bold)
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    text = "Ride ID: ${ride.id}",
+                    fontWeight = FontWeight.Bold,
+                    color = textColor,
+                    textAlign = TextAlign.Center
+                )
             }
 
-            Row {
-                Text(text = "Date: ", fontWeight = FontWeight.SemiBold)
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+            ){
+                Text(
+                    modifier = Modifier
+                        .padding(end = 6.dp),
+                    text = "Date: ",
+                    fontWeight = FontWeight.SemiBold,
+                    color = textColor
+                )
                 ride.date?.let {
-                    Text(text = extractDate(ride.date))
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 6.dp),
+                        text = extractDate(ride.date),
+                        color = textColor
+                    )
                 }
             }
 
-            Row {
-                Text(text = "Time: ", fontWeight = FontWeight.SemiBold)
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+            ){
+                Text(
+                    modifier = Modifier
+                        .padding(end = 6.dp),
+                    text = "Time: ",
+                    fontWeight = FontWeight.SemiBold,
+                    color = textColor
+                )
                 ride.date?.let {
-                    Text(text = extractTime(ride.date))
+                    Text(
+                        modifier = Modifier
+                            .padding(start = 6.dp),
+                        text = extractTime(ride.date),
+                        color = textColor
+                    )
                 }
             }
 
-            Row {
-                Text(text = "Driver: ", fontWeight = FontWeight.SemiBold)
-                Text(text = ride.driver.name)
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+            ){
+                Text(
+                    modifier = Modifier
+                        .padding(end = 6.dp),
+                    text = "Driver: ",
+                    fontWeight = FontWeight.SemiBold,
+                    color = textColor
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 6.dp),
+                    text = ride.driver.name,
+                    color = textColor
+                )
             }
 
-            Text(text = "Origin", fontWeight = FontWeight.SemiBold)
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                text = "Origin",
+                fontWeight = FontWeight.SemiBold,
+                color = textColor
+            )
 
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.CenterStart
             ) {
-                Text(text = ride.origin, textAlign = TextAlign.Justify, softWrap = true)
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    text = ride.origin,
+                    textAlign = TextAlign.Justify,
+                    softWrap = true,
+                    color = textColor
+                )
             }
 
-            Text(text = "Destination", fontWeight = FontWeight.SemiBold)
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                text = "Destination",
+                fontWeight = FontWeight.SemiBold,
+                color = textColor
+            )
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.CenterStart
             ) {
-                Text(text = ride.destination, textAlign = TextAlign.Justify, softWrap = true)
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    text = ride.destination,
+                    textAlign = TextAlign.Justify,
+                    softWrap = true,
+                    color = textColor
+                )
             }
 
-            Row {
-                Text(text = "Distance: ", fontWeight = FontWeight.SemiBold)
-                Text(text = formatHistoryDistance(ride.distance))
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+            ){
+                Text(
+                    modifier = Modifier
+                        .padding(end = 6.dp),
+                    text = "Distance: ",
+                    fontWeight = FontWeight.SemiBold,
+                    color = textColor
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 6.dp),
+                    text = formatHistoryDistance(ride.distance),
+                    color = textColor
+                )
             }
 
-            Row {
-                Text(text = "Duration: ", fontWeight = FontWeight.SemiBold)
-                Text(text = formatDurationTimeToString(ride.duration))
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+            ){
+                Text(
+                    modifier = Modifier
+                        .padding(end = 6.dp),
+                    text = "Duration: ",
+                    fontWeight = FontWeight.SemiBold,
+                    color = textColor
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 6.dp),
+                    text = formatDurationTimeToString(ride.duration),
+                    color = textColor
+                )
             }
 
-            Row {
-                Text(text = "Value: ", fontWeight = FontWeight.SemiBold)
-                Text(text = "$${formatValue(ride.value)}")
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+            ){
+                Text(
+                    modifier = Modifier
+                        .padding(end = 6.dp),
+                    text = "Value: ",
+                    fontWeight = FontWeight.SemiBold,
+                    color = textColor
+                )
+                Text(
+                    modifier = Modifier
+                        .padding(start = 6.dp),
+                    text = "$${formatValue(ride.value)}",
+                    color = textColor
+                )
             }
         }
     }
@@ -421,8 +535,161 @@ private fun DisplayErrorText(
             text = uiState.error.asString(context),
             softWrap = true,
             textAlign = TextAlign.Center,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            fontSize = 18.sp
         )
     }
 }
+
+@Composable
+private fun RideHistoryButton(
+    modifier: Modifier = Modifier,
+    keyboardController: SoftwareKeyboardController?,
+    uiState: RideHistoryState,
+    cancelRequest: () -> Unit,
+    confirmRequest: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (uiState.isNetworkLoading) Color.LightGray else Color.DarkGray,
+                contentColor = if (uiState.isNetworkLoading) Color.Black else Color.White
+            ),
+            enabled = uiState.canRequestAgain,
+            onClick = {
+                keyboardController?.hide()
+                when {
+                    uiState.isNetworkLoading -> {
+                        cancelRequest()
+                    }
+
+                    else -> {
+                        confirmRequest()
+                    }
+                }
+            }) {
+            Text(
+                text =
+                when {
+                    uiState.isNetworkLoading -> {
+                        stringResource(R.string.cancel_button_label)
+                    }
+
+                    else -> {
+                        stringResource(R.string.ride_history_button_label)
+                    }
+                },
+                fontSize = 18.sp
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DriverSelector(
+    modifier: Modifier = Modifier,
+    uiState: RideHistoryState,
+    keyboardController: SoftwareKeyboardController? = null,
+    onExpandedChange: (Boolean) -> Unit,
+    onDismiss: (Boolean) -> Unit,
+    onDriverSelected: (Driver) -> Unit
+) {
+
+    ExposedDropdownMenuBox(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .fillMaxWidth(0.9f),
+        expanded = uiState.isDriverMenuExpanded,
+        onExpandedChange = {
+            onExpandedChange(it)
+        },
+    ) {
+
+        TextField(
+            modifier = modifier
+                .clip(RoundedCornerShape(16.dp))
+                .fillMaxWidth()
+                .menuAnchor(
+                    type = MenuAnchorType.PrimaryEditable,
+                ),
+            readOnly = true,
+            value = uiState.driverName,
+            onValueChange = {},
+            textStyle = TextStyle(
+                textAlign = TextAlign.Center,
+                fontSize = 16.sp
+            ),
+            label = { Text("Select Driver") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = uiState.isDriverMenuExpanded)
+            }
+        )
+        MaterialTheme(
+            shapes = Shapes(RoundedCornerShape(16.dp)),
+            content = {
+                ExposedDropdownMenu(
+                    modifier = modifier
+                        .border(
+                            width = 1.dp,
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color.LightGray
+                        ),
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = Color.DarkGray,
+                    expanded = uiState.isDriverMenuExpanded,
+                    onDismissRequest = { onDismiss(false) }
+                ) {
+                    Driver.entries.forEach { driver ->
+                        DropdownMenuItem(
+                            modifier = modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .fillMaxWidth()
+                                .drawBehind {
+                                    val strokeWidth = 1.dp.toPx()
+                                    val lineWidth = size.width * 0.7f
+                                    drawLine(
+                                        color = Color.LightGray,
+                                        start = Offset(
+                                            (size.width - lineWidth) / 2,
+                                            size.height - strokeWidth / 2
+                                        ),
+                                        end = Offset(
+                                            (size.width + lineWidth) / 2,
+                                            size.height - strokeWidth / 2
+                                        ),
+                                        strokeWidth = strokeWidth
+                                    )
+                                },
+                            onClick = {
+                                onDriverSelected(driver)
+                                onDismiss(false)
+                                keyboardController?.hide()
+                            },
+                            text = {
+                                Text(
+                                    modifier = modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp),
+                                    text = driver.driverName,
+                                    fontSize = 16.sp,
+                                    textAlign = TextAlign.Center,
+                                    color = Color.White
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        )
+    }
+}
+
+
 

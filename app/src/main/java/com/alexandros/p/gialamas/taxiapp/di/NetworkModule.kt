@@ -1,7 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.di
 
 import com.alexandros.p.gialamas.taxiapp.data.source.remote.KtorHelper
-import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideService
+import com.alexandros.p.gialamas.taxiapp.domain.remote.api.RideService
 import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideServiceImpl
 import dagger.Module
 import dagger.Provides

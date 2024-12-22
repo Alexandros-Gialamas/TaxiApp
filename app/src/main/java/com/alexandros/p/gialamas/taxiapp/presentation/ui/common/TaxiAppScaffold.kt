@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 
 
 @Composable
-fun TaxiScaffold(
+fun TaxiAppScaffold(
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},

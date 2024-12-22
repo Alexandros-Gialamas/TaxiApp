@@ -2,7 +2,7 @@ package com.alexandros.p.gialamas.taxiapp.source.remote.api
 
 import android.util.Log
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
-import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideService
+import com.alexandros.p.gialamas.taxiapp.domain.remote.api.RideService
 import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideServiceImpl
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import io.ktor.client.HttpClient

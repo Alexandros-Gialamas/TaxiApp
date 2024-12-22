@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.navigation.NavigationController
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.theme.SetSystemBarColors
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.theme.TaxiAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,6 +21,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TaxiAppTheme {
+                SetSystemBarColors()
                 NavigationController()
             }
         }
