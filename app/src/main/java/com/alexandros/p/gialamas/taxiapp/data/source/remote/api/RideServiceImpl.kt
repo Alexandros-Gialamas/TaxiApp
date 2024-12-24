@@ -7,6 +7,7 @@ import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
 import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
 import com.alexandros.p.gialamas.taxiapp.data.util.Constants
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
+import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmError
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
 import com.alexandros.p.gialamas.taxiapp.domain.remote.api.RideService
@@ -67,7 +68,7 @@ class RideServiceImpl @Inject constructor(
     }
 
 
-    override suspend fun confirmRide(confirmRideRequest: ConfirmRideRequest): Boolean {
+    override suspend fun confirmRide(confirmRideRequest: ConfirmRideRequest): Result<Boolean, RideConfirmError.NetWork> {
         try {
             val response =
                 httpClient.patch(Constants.API_CONFIRM_RIDE_ENDPOINT) {
@@ -84,12 +85,16 @@ class RideServiceImpl @Inject constructor(
                         )
                     )
                 }
-            val responseBody = response.body<String>()
-            Log.d("RideConfirmServiceImpl", "confirmRide response: $responseBody")
-            return response.status.value == 200
+
+            return if (response.status.isSuccess()) {
+                Result.Success(true)
+            } else {
+                Result.Error(RideConfirmError.NetWork.RIDE_NOT_CONFIRMED)
+            }
+
         } catch (e: Exception) {
-            Log.e("RideConfirmServiceImpl", "confirmRide: Error = ${e.message}")
-            throw e
+            Timber.e(e, "Error confirming the ride : ${e.message}")
+          return  Result.Error(RideConfirmError.NetWork.UNKNOWN_ERROR)
         }
 
     }

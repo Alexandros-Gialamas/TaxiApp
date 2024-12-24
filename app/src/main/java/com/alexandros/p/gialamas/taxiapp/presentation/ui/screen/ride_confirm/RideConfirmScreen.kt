@@ -62,18 +62,23 @@ fun RideConfirmScreen(
     customerId: String,
     origin: String,
     destination: String,
-    onRideConfirmed: (RideOption) -> Unit,
+    onRideConfirmed: () -> Unit,
     onBackPress: () -> Unit
 ) {
     BackHandler {
         onBackPress()
     }
 
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+
     LaunchedEffect(Unit) {
-        viewModel.collectState(customerId, origin, destination, result)
+        viewModel.collectState(result, customerId, origin, destination)
     }
 
-    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    LaunchedEffect(uiState.isRideConfirmed) {
+        if (uiState.isRideConfirmed) onRideConfirmed()
+    }
+
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
@@ -84,25 +89,18 @@ fun RideConfirmScreen(
         )
     }
 
-    val driverMinKmMap = mapOf<Int, Int>(
-        1 to 1,
-        2 to 5,
-        3 to 10
-    )
+
 
     val context = LocalContext.current
-    var wrongKm by remember { mutableStateOf(false) }
-    var distanceOnKm: Int? by remember { mutableStateOf(null) }
-    var driverKm: Int? by remember { mutableStateOf(null) }
 
-    LaunchedEffect(wrongKm) {
-        if (wrongKm) {
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) {
             Toast.makeText(
                 context,
-                "Distance: $distanceOnKm  DriverKm: $driverKm",
-                Toast.LENGTH_LONG
+                uiState.error.asString(context),
+                Toast.LENGTH_SHORT
             ).show()
-            wrongKm = false
         }
     }
 
@@ -201,19 +199,25 @@ fun RideConfirmScreen(
                     RideOptionItem(
                         rideOption = rideOption,
                         onRideOptionSelected = {
-                            val minKm = driverMinKmMap[rideOption.id] ?: 0
-                            val distanceKm = uiState.rideEstimate?.let { it.distance / 1000 }
-                            if (distanceKm?.let { it < minKm } == true) {
-                                distanceOnKm = distanceKm.toInt()
-                                driverKm = minKm
-                                wrongKm = true
-                            } else {
+//                            val minKm = driverMinKmMap[rideOption.id] ?: 0
+//                            val distanceKm = uiState.rideEstimate?.let { it.distance / 1000 }
+//                            if (distanceKm?.let { it < minKm } == true) {
+//                                distanceOnKm = distanceKm.toInt()
+//                                driverKm = minKm
+//                                wrongKm = true
+                            viewModel.collectRideOption(it)
+                            viewModel.confirmRide(context)
 
-                                if (uiState.rideEstimate != null) {
-                                    viewModel.confirmRide(rideOption)
-                                    onRideConfirmed(rideOption)
-                                }
-                            }
+
+
+//                            }
+//                        else {
+//
+//                                if (uiState.rideEstimate != null) {
+//                                    viewModel.confirmRide(rideOption)
+//                                    onRideConfirmed(rideOption)
+//                                }
+//                            }
                         }
                     )
                 }
@@ -380,7 +384,7 @@ private fun ConfirmRideContent(
 private fun RideOptionItem(
     modifier: Modifier = Modifier,
     rideOption: RideOption,
-    onRideOptionSelected: () -> Unit
+    onRideOptionSelected: (RideOption) -> Unit,
 ) {
 
     val textColor = Color.White
@@ -527,7 +531,7 @@ private fun RideOptionItem(
                         containerColor = Color.LightGray,
                         contentColor = Color.DarkGray
                     ),
-                    onClick = { onRideOptionSelected() }
+                    onClick = { onRideOptionSelected(rideOption) }
                 ) {
                     Text(
                         stringResource(R.string.select_driver_button_label),

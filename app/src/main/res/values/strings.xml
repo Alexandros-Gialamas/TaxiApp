@@ -36,9 +36,11 @@
     <string name="invalid_customer_error">Invalid Customer ID provided. Please check the Customer ID input.</string>
     <string name="driver_not_found_error">Driver not found. Please select a different driver.</string>
     <string name="invalid_distance_error">Invalid distance for the selected driver.</string>
-    <string name="no_rides_found_error">No rides found with the specific parameters.</string>
+    <string name="no_rides_found_error">No rides found with these criteria.</string>
     <string name="unknown_error">An unexpected error occurred. Please try again later.</string>
-    <string name="local_error">Local error</string>
+    <string name="local_error">Local rides history is unavailable</string>
+    <string name="save_ride_failed">Failed to save the ride due to invalid distance of the driver</string>
+    <string name="ride_not_confirmed">Ride is not confirmed. Please select another ride.</string>
 
 
 </resources>

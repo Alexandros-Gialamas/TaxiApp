@@ -105,152 +105,157 @@ class RideEstimateViewModel @Inject constructor(
         origin: String,
         destination: String,
     ) {
-        _uiState.update {
-            it.copy(
-                isCustomerIdValid = customerId.isNotBlank(),
-                isOriginValid = origin.isNotBlank(),
-                isDestinationValid = destination.isNotBlank()
-            )
-        }
+
 
         if (!checkInternetConnectivity(context)) {
             _uiState.update {
                 it.copy(
-                    error = RideEstimateError.Network.NETWORK_ERROR.asEstimateUiText()
+                    error = RideEstimateError.Network.NETWORK_ERROR.asEstimateUiText(),
+                    isLoading = false
                 )
             }
-        }
+        } else {
 
-        apiRequestJob = Job()
-
-
-        apiRequestJob?.let {
-            viewModelScope.launch(Dispatchers.IO + apiRequestJob as CompletableJob) {
-
-                when (val result = rideEstimateUserDataValidator.validation(
-                    customerId = customerId,
-                    origin = origin,
-                    destination = destination
+            _uiState.update {
+                it.copy(
+                    isCustomerIdValid = customerId.isNotBlank(),
+                    isOriginValid = origin.isNotBlank(),
+                    isDestinationValid = destination.isNotBlank()
                 )
-                ) {
-                    is Result.Error -> {
-                        _uiState.update {
-                            it.copy(
-                                error = when (result.error) {
-                                    RideEstimateError.UserDataValidation.INVALID_CUSTOMER_ID -> result.error.asEstimateUiText()
-                                    RideEstimateError.UserDataValidation.INVALID_ORIGIN -> result.error.asEstimateUiText()
-                                    RideEstimateError.UserDataValidation.INVALID_DESTINATION -> result.error.asEstimateUiText()
-                                }
-                            )
-                        }
-                    }
+            }
 
-                    is Result.Success -> {
 
-                        try {
-                            withContext(Dispatchers.Main) {
-                                clearError()
-                                _uiState.update {
-                                    it.copy(
-                                        isLoading = true
-                                    )
-                                }
+            apiRequestJob = Job()
+
+
+            apiRequestJob?.let {
+                viewModelScope.launch(Dispatchers.IO + apiRequestJob as CompletableJob) {
+
+                    when (val result = rideEstimateUserDataValidator.validation(
+                        customerId = customerId,
+                        origin = origin,
+                        destination = destination
+                    )
+                    ) {
+                        is Result.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    error = when (result.error) {
+                                        RideEstimateError.UserDataValidation.INVALID_CUSTOMER_ID -> result.error.asEstimateUiText()
+                                        RideEstimateError.UserDataValidation.INVALID_ORIGIN -> result.error.asEstimateUiText()
+                                        RideEstimateError.UserDataValidation.INVALID_DESTINATION -> result.error.asEstimateUiText()
+                                    }
+                                )
                             }
+                        }
 
-                            when (val rideEstimate =
-                                getRideEstimateUseCase(customerId, origin, destination)) {
+                        is Result.Success -> {
 
-                                is Result.Error -> {
+                            try {
+                                withContext(Dispatchers.Main) {
+                                    clearError()
                                     _uiState.update {
                                         it.copy(
-                                            error = rideEstimate.error.asEstimateUiText(),
-                                            isLoading = false
+                                            isLoading = true
                                         )
                                     }
                                 }
 
-                                is Result.Success -> {
+                                when (val rideEstimate =
+                                    getRideEstimateUseCase(customerId, origin, destination)) {
 
-                                    when (val rideEstimateResult = rideEstimate.data) {
-                                        is RideEstimateResponse.Error -> {
-                                            _uiState.update {
-                                                it.copy(
-                                                    error = when (rideEstimateResult.response.status.value) {
-                                                        400 -> {
-                                                            RideEstimateError.Network.INVALID_DATA.asEstimateUiText()
-                                                        }
-
-                                                        404 -> {
-                                                            RideEstimateError.Network.DRIVER_NOT_FOUND.asEstimateUiText()
-                                                        }
-
-                                                        406 -> {
-                                                            RideEstimateError.Network.INVALID_DISTANCE.asEstimateUiText()
-                                                        }
-
-                                                        else -> {
-                                                            RideEstimateError.Network.UNKNOWN_ERROR.asEstimateUiText()
-                                                        }
-                                                    },
-                                                    isLoading = false
-                                                )
-                                            }
+                                    is Result.Error -> {
+                                        _uiState.update {
+                                            it.copy(
+                                                error = rideEstimate.error.asEstimateUiText(),
+                                                isLoading = false
+                                            )
                                         }
+                                    }
 
-                                        is RideEstimateResponse.EstimateResponse -> {
-                                            var isValid = true
+                                    is Result.Success -> {
 
-                                            if (uiState.value.customerId != Customer.CUSTOMER_1.customerId){
+                                        when (val rideEstimateResult = rideEstimate.data) {
+                                            is RideEstimateResponse.Error -> {
                                                 _uiState.update {
                                                     it.copy(
-                                                        error = RideEstimateError.Network.INVALID_CUSTOMER_ID.asEstimateUiText(),
+                                                        error = when (rideEstimateResult.response.status.value) {
+                                                            400 -> {
+                                                                RideEstimateError.Network.INVALID_DATA.asEstimateUiText()
+                                                            }
+
+                                                            404 -> {
+                                                                RideEstimateError.Network.DRIVER_NOT_FOUND.asEstimateUiText()
+                                                            }
+
+                                                            406 -> {
+                                                                RideEstimateError.Network.INVALID_DISTANCE.asEstimateUiText()
+                                                            }
+
+                                                            else -> {
+                                                                RideEstimateError.Network.UNKNOWN_ERROR.asEstimateUiText()
+                                                            }
+                                                        },
                                                         isLoading = false
                                                     )
                                                 }
-                                                isValid = false
                                             }
 
-                                            if (rideEstimateResult.distance <= 0.0) {
-                                                _uiState.update {
-                                                    it.copy(
-                                                        error = RideEstimateError.Network.INVALID_LOCATION.asEstimateUiText(),
-                                                        isLoading = false
-                                                    )
-                                                }
-                                                isValid = false
-                                            }
+                                            is RideEstimateResponse.EstimateResponse -> {
+                                                var isValid = true
 
-                                            if (isValid && rideEstimateResult.distance > 0.0) {
-                                                _uiState.update {
-                                                    it.copy(
-                                                        rideEstimate = Result.Success(
-                                                            rideEstimateResult.toRideEstimate()
+                                                if (uiState.value.customerId != Customer.CUSTOMER_1.customerId) {
+                                                    _uiState.update {
+                                                        it.copy(
+                                                            error = RideEstimateError.Network.INVALID_CUSTOMER_ID.asEstimateUiText(),
+                                                            isLoading = false
                                                         )
-                                                    )
+                                                    }
+                                                    isValid = false
+                                                }
+
+                                                if (rideEstimateResult.distance <= 0.0) {
+                                                    _uiState.update {
+                                                        it.copy(
+                                                            error = RideEstimateError.Network.INVALID_LOCATION.asEstimateUiText(),
+                                                            isLoading = false
+                                                        )
+                                                    }
+                                                    isValid = false
+                                                }
+
+                                                if (isValid && rideEstimateResult.distance > 0.0) {
+                                                    _uiState.update {
+                                                        it.copy(
+                                                            rideEstimate = Result.Success(
+                                                                rideEstimateResult.toRideEstimate()
+                                                            )
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
                                     }
+
+                                    else -> {}
                                 }
 
-                                else -> {}
-                            }
 
+                            } catch (e: Exception) {
 
-                        } catch (e: Exception) {
-
-                            withContext(Dispatchers.Main) {
-                                _uiState.update {
-                                    it.copy(
-                                        rideEstimate = Result.Error(RideEstimateError.Network.UNKNOWN_ERROR),
-                                        isLoading = false
-                                    )
+                                withContext(Dispatchers.Main) {
+                                    _uiState.update {
+                                        it.copy(
+                                            rideEstimate = Result.Error(RideEstimateError.Network.UNKNOWN_ERROR),
+                                            isLoading = false
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    else -> {}
+                        else -> {}
+                    }
                 }
             }
         }

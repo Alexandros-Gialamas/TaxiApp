@@ -56,26 +56,25 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alexandros.p.gialamas.taxiapp.R
+import com.alexandros.p.gialamas.taxiapp.data.mapper.toRide
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistory
-import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.AutoCompleteTextField
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiAppScaffold
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Customer
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Driver
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractDate
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractTime
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatDurationTimeToString
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatHistoryDistance
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatValue
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Customer
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Driver
 import kotlinx.coroutines.delay
 
 @Composable
 fun RideHistoryScreen(
     modifier: Modifier = Modifier,
     viewModel: RideHistoryViewModel = hiltViewModel<RideHistoryViewModel>(),
-    rideOption: RideOption
 ) {
 
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
@@ -160,14 +159,14 @@ fun RideHistoryScreen(
                                     shape = RoundedCornerShape(16.dp)
                                 )
                                 .fillMaxWidth(0.9f)
-                                .padding(8.dp)
+                                .padding(horizontal = 8.dp, vertical = 24.dp)
                         ) {
                             Column(
                                 modifier = modifier
                                     .background(Color.DarkGray)
                                     .fillMaxWidth()
                                     .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 AutoCompleteTextField(
@@ -222,6 +221,10 @@ fun RideHistoryScreen(
                                 driverId = uiState.driverId,
                                 context = context
                             )
+                            viewModel.getLocalRidesHistory(
+                                customerId = uiState.customerId,
+                                driverId = uiState.driverId
+                            )
                         }
                     )
                 }
@@ -239,21 +242,23 @@ fun RideHistoryScreen(
                     }
                 }
 
-//            uiState.localRides?.let { data ->
-//                when (data) {
-//                    is Result.Error -> {
-//
-//                    }
-//
-//                    is Result.Success -> {
-//                        items(data.data) { ride ->
-//                            LocalRideItem(ride)
-//                        }
-//                    }
-//
-//                    else -> {}
-//                }
-//            }
+
+
+            uiState.localRides?.let { data ->
+                when (data) {
+                    is Result.Error -> {
+
+                    }
+
+                    is Result.Success -> {
+                        items(data.data) { ride ->
+                            LocalRideItem(ride)
+                        }
+                    }
+
+                    else -> {}
+                }
+            }
 
 //            when (localRidesCollection) {
 //                is Result.Error -> {
@@ -268,6 +273,7 @@ fun RideHistoryScreen(
 //
 //                else -> {}
 //            }
+
 
 
                 uiState.rideHistory?.let { result ->

@@ -3,6 +3,7 @@ package com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentatio
 import com.alexandros.p.gialamas.taxiapp.R
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
+import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmError
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 
 fun RideHistoryError.asHistoryUiText(): UiText {
@@ -15,6 +16,17 @@ fun RideHistoryError.asHistoryUiText(): UiText {
         RideHistoryError.Network.UNKNOWN_ERROR -> UiText.StringResource(R.string.unknown_error)
         RideHistoryError.UserDataValidation.INVALID_CUSTOMER_ID -> UiText.StringResource(R.string.empty_customer_id_field)
         RideHistoryError.Local.LOCAL_ERROR -> UiText.StringResource(R.string.local_error)
+    }
+}
+
+fun RideConfirmError.asConfirmUiText(): UiText{
+    return when (this){
+        RideConfirmError.NetWork.INVALID_DISTANCE -> UiText.StringResource(R.string.invalid_distance_error)
+        RideConfirmError.NetWork.NETWORK_ERROR -> UiText.StringResource(R.string.network_error)
+        RideConfirmError.NetWork.UNKNOWN_ERROR -> UiText.StringResource(R.string.unknown_error)
+        RideConfirmError.NetWork.RIDE_NOT_CONFIRMED -> UiText.StringResource(R.string.ride_not_confirmed)
+        RideConfirmError.Local.FAILED_TO_SAVE_THE_RIDE -> UiText.StringResource(R.string.save_ride_failed)
+
     }
 }
 
@@ -38,6 +50,10 @@ fun RideEstimateError.asEstimateUiText(): UiText {
 
 fun Result.Error<*, RideHistoryError>.asHistoryUiText(): UiText {
     return error.asHistoryUiText()
+}
+
+fun Result.Error<*, RideConfirmError>.asConfirmUiText(): UiText {
+    return error.asConfirmUiText()
 }
 
 fun Result.Error<*, RideEstimateError>.asEstimateUiText(): UiText {

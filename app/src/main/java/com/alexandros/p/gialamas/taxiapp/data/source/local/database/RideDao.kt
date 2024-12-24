@@ -1,6 +1,5 @@
 package com.alexandros.p.gialamas.taxiapp.data.source.local.database
 
-import android.util.Log
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -13,8 +12,8 @@ interface RideDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRide(ride: RideEntity){
-        Log.d("RideConfirmDao", "insertRide called with entity: $ride")
     }
+
 
     @Query("SELECT * FROM rides_table WHERE customerId = :customerId")
     fun getAllRides(customerId: String): Flow<List<RideEntity>>
