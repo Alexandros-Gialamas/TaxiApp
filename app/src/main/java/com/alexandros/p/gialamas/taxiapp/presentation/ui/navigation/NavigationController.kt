@@ -72,22 +72,14 @@ fun NavigationController() {
                 onBackPress = {
                     navController.navigate(Screens.RideEstimateScreen)
                 },
-                onRideConfirmed = { rideOption ->
-                    navController.navigate(Screens.RideHistoryScreen(rideOption))
-                }
+                onRideConfirmed = { navController.navigate(Screens.RideHistoryScreen) }
             )
         }
 
 
-        composable<Screens.RideHistoryScreen>(
-            typeMap = mapOf(navigationCustomArgument<RideOption>())
-        ) {
-            val args = it.toRoute<Screens.RideHistoryScreen>()
-            RideHistoryScreen(
-                rideOption = args.rideOption
-            )
+        composable<Screens.RideHistoryScreen> {
+            RideHistoryScreen()
         }
-
     }
 
 }
@@ -106,10 +98,10 @@ sealed class Screens {
         val rideEstimate: RideEstimate,
         val customerId: String,
         val origin: String,
-        val destination: String,
+        val destination: String
     ) : Screens()
 
     @Serializable
-    data class RideHistoryScreen(val rideOption: RideOption) : Screens()
+    data object RideHistoryScreen : Screens()
 
 }

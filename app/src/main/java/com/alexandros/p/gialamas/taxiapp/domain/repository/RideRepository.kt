@@ -1,9 +1,11 @@
 package com.alexandros.p.gialamas.taxiapp.domain.repository
 
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
+import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
 import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
+import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmError
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
@@ -11,7 +13,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface RideRepository {
 
-    suspend fun saveRide(ride: Ride)
+
+
+    suspend fun saveRide(ride: RideEntity)
 
    suspend fun getRideEstimate(
         customerId: String,
@@ -32,6 +36,6 @@ interface RideRepository {
 
     suspend fun confirmRide(
         confirmRideRequest: ConfirmRideRequest
-    ) : Boolean
+    ) : Result<Boolean, RideConfirmError.NetWork>
 
 }

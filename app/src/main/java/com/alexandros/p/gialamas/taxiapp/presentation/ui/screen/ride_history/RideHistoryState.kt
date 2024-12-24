@@ -1,5 +1,6 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history
 
+import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride

@@ -135,7 +135,7 @@ fun RideEstimateScreen(
                             .clip(RoundedCornerShape(16.dp))
                             .background(color = Color.DarkGray, shape = RoundedCornerShape(16.dp))
                             .fillMaxWidth(0.9f)
-                            .padding(8.dp)
+                            .padding(horizontal = 8.dp, vertical = 24.dp)
                     ) {
                         Column(
                             modifier = modifier

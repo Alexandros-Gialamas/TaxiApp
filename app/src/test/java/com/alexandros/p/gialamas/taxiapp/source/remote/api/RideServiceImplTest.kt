@@ -1,11 +1,18 @@
 package com.alexandros.p.gialamas.taxiapp.source.remote.api
 
 import android.util.Log
+import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
+import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
+import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
 import com.alexandros.p.gialamas.taxiapp.domain.remote.api.RideService
 import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideServiceImpl
+import com.alexandros.p.gialamas.taxiapp.domain.error.Result
+import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.asEstimateUiText
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -14,9 +21,11 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
+import junit.framework.Assert.fail
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -40,7 +49,10 @@ class RideServiceImplTest {
             respond(
                 content = dealWithRequest(request.url.encodedPath),
                 status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                headers = headersOf(
+                    HttpHeaders.ContentType,
+                    ContentType.Application.Json.toString()
+                )
             )
         }
         mockStatic(Log::class.java)
@@ -50,14 +62,6 @@ class RideServiceImplTest {
             install(ContentNegotiation) {
                 json(json)
             }
-//            install(Logging) {
-//                logger = object : Logger {
-//                    override fun log(message: String) {
-//                         println(message)
-//                    }
-//                }
-//                level = LogLevel.ALL
-//            }
         }
         rideService = RideServiceImpl(httpClient)
     }
@@ -96,9 +100,11 @@ class RideServiceImplTest {
                 }
                 """
             }
+
             encodedPath.contains("/ride/confirm") -> {
                 "{\"success\": true}"
             }
+
             encodedPath.contains("/ride/CT01") -> {
                 """
                 {
@@ -121,6 +127,7 @@ class RideServiceImplTest {
                 }
                 """
             }
+
             else -> {
                 "{}"
             }
@@ -134,36 +141,47 @@ class RideServiceImplTest {
             origin = "Origin A",
             destination = "Destination B"
         )
-        val response = rideService.getRideEstimate(request.customerId, request.origin, request.destination)
+        val result : Result<RideEstimateResponse, RideEstimateError.Network> =
+            rideService.getRideEstimate(request.customerId, request.origin, request.destination)
 
-        assertEquals(3.2, response.distance, 0.001)
-        assertEquals("12 mins", response.duration)
+        if (result is Result.Success){
+            val estimateResponse = result.data as RideEstimateResponse.EstimateResponse
+            assertEquals(3.2, estimateResponse.distance, 0.001)
+            assertEquals("12 mins", estimateResponse.duration)
+        }
     }
 
     @Test
     fun `confirmRide returns true`() = runBlocking {
-        val ride = Ride(
+        val ride = ConfirmRideRequest(
             origin = "Origin A",
             destination = "Destination B",
             distance = 5.0,
             duration = "20 mins",
             driver = com.alexandros.p.gialamas.taxiapp.domain.model.Driver(1, "Driver 1"),
-            value = 25.0
-        )
-        val response = rideService.confirmRide(ride)
+            value = 25.0,
+            customerId = "CT01",
 
-        assertEquals(true, response)
+            )
+        when (val response = rideService.confirmRide(ride)) {
+            is Result.Error -> {}
+            is Result.Success -> { assertTrue(response.data) }
+           else -> {}
+        }
     }
 
     @Test
     fun `getRideHistory returns list of rides`() = runBlocking {
-        val response = rideService.getRideHistory("CT01")
 
-        assertEquals(1, response.rides.size)
-        assertEquals("CT01", response.customerId)
+        val result = rideService.getRideHistory("CT01")
+
+        if (result is Result.Success){
+            val historyResponse = result.data as RideHistoryResponse.HistoryResponse
+            assertEquals(1, historyResponse.rides.size)
+            assertEquals("CT01", historyResponse.customerId)
+            }
+
     }
-
-
 
 
 }

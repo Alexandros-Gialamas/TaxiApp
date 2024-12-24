@@ -7,7 +7,7 @@ import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 
 fun Ride.toEntity(): RideEntity {
     return RideEntity(
-        id = this.id ?: 0,
+//        id = this.id ?: 0,
         date = this.date,
         customerId = this.customerId,
         origin = this.origin,
@@ -29,26 +29,24 @@ fun RideEntity.toRide(): Ride {
         destination = this.destination,
         distance = this.distance,
         duration = this.duration,
-        driver = Driver(this.driverId, this.driverName),
+        driver = Driver(
+            id = this.driverId,
+            name = this.driverName
+        ),
         value = this.value
     )
 }
 
 fun ConfirmRideRequest.toRide(
-    id: Int? = null,
-    date: String? = null,
     customerId: String,
-    driver: Driver
 ): Ride {
     return Ride(
-        id = id,
-        date = date,
         customerId = customerId,
         origin = this.origin,
         destination = this.destination,
         distance = this.distance,
         duration = this.duration,
-        driver = Driver(id = driver.id, name = driver.name),
+        driver = Driver(id = this.driver.id, name = this.driver.name),
         value = this.value
     )
 }
