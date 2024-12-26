@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.domain.usecase
+package com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_confirm
 
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.domain.repository.RideRepository

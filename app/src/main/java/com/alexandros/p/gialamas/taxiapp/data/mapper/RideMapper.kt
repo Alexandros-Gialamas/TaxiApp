@@ -4,6 +4,9 @@ import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 fun Ride.toEntity(): RideEntity {
     return RideEntity(
@@ -38,10 +41,14 @@ fun RideEntity.toRide(): Ride {
 }
 
 fun ConfirmRideRequest.toRide(
-    customerId: String,
 ): Ride {
+    val currentDate =
+        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
+            Date()
+        )
     return Ride(
-        customerId = customerId,
+        customerId = this.customerId,
+        date = currentDate,
         origin = this.origin,
         destination = this.destination,
         distance = this.distance,

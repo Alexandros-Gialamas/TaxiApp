@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.ksp)
     // Dagger-Hilt dependency injection library plugin
     alias(libs.plugins.dagger.hilt)
+    // Room
+     alias(libs.plugins.room)
     // Kotlin Serialization plugin
     alias(libs.plugins.kotlin.serialization)
 
@@ -45,6 +47,10 @@ android {
         jvmTarget = "11"
     }
 
+    // Room Schema
+    room {
+        schemaDirectory("$projectDir/schemas")
+    }
 
     buildFeatures {
         compose = true
@@ -59,6 +65,7 @@ dependencies {
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.4")
@@ -77,15 +84,19 @@ dependencies {
     // Gson
     implementation ("com.google.code.gson:gson:2.11.0")
 
-    // Dagger Hilt
-    implementation("com.google.dagger:hilt-android:2.52")
-    ksp("com.google.dagger:hilt-android-compiler:2.52")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
+    ksp(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
 
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1") // KSP for Room
+    ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.1")

@@ -7,15 +7,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -61,11 +62,17 @@ fun RideEstimateScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
-    val imagePresentation = if (uiState.isLoading) {
+
+    val imagePresentation = painterResource(R.drawable.search_ride)
+
+
+    val backgroundImage = if (uiState.isLoading) {
         painterResource(R.drawable.taking_a_ride)
     } else {
-        painterResource(R.drawable.search_ride)
+        painterResource(R.drawable.splash_screen)
     }
+
+    val backgroundColor = Color.Transparent
 
     var displayError by remember { mutableStateOf(false) }
     var debounce by remember { mutableStateOf(false) }
@@ -78,7 +85,7 @@ fun RideEstimateScreen(
         }
     }
 
-    LaunchedEffect (debounce){
+    LaunchedEffect(debounce) {
         if (debounce) {
             viewModel.cancelApiRequest()
             debounce = false
@@ -93,7 +100,7 @@ fun RideEstimateScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Gray),
+                .background(Color.DarkGray),
             contentAlignment = Alignment.Center
         ) {
 
@@ -101,7 +108,7 @@ fun RideEstimateScreen(
                 modifier = modifier
                     .fillMaxSize()
                     .alpha(0.1f),
-                painter = painterResource(R.drawable.splash_screen),
+                painter = backgroundImage,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.Center
@@ -128,150 +135,163 @@ fun RideEstimateScreen(
                     )
                 }
 
+                item { Spacer(modifier = modifier.height(8.dp)) }
+
 
                 item {
-                    Card(
+//                    Card(
+//                        modifier = modifier
+//                            .clip(RoundedCornerShape(16.dp))
+//                            .background(color = backgroundColor, shape = RoundedCornerShape(16.dp))
+//                            .fillMaxWidth(0.9f)
+//                            .padding(horizontal = 8.dp, vertical = 24.dp)
+//                    ) {
+                    Column(
                         modifier = modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(color = Color.DarkGray, shape = RoundedCornerShape(16.dp))
+//                                .background(Color.DarkGray)
                             .fillMaxWidth(0.9f)
-                            .padding(horizontal = 8.dp, vertical = 24.dp)
+                            .fillMaxHeight(),
+//                                .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(30.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = modifier
-                                .background(Color.DarkGray)
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            when {
-                                uiState.isLoading -> {
+                        when {
+                            uiState.isLoading -> {
 
-                                    Box(
-                                        modifier = modifier
-                                            .fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Column(
-                                            modifier = modifier
-                                                .fillMaxSize(),
-                                            verticalArrangement = Arrangement.spacedBy(24.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
 
-                                            Text(
-                                                modifier = modifier
-                                                    .fillMaxWidth(),
-                                                text = ("Waiting the response..."),
-                                                color = Color.White,
-                                                fontSize = 20.sp,
-                                                textAlign = TextAlign.Center
-
-                                            )
-
-                                            CircularProgressIndicator(color = Color.LightGray)
-
-                                            RideEstimateButton(
-                                                uiState = uiState,
-                                                keyboardController = keyboardController,
-                                                cancelRequest = { debounce = true },
-                                                confirmRequest = { }
-                                            )
-                                        }
-                                    }
-                                }
-
-                                !uiState.isLoading -> {
+                                Box(
+                                    modifier = modifier
+                                        .fillMaxSize()
+                                        .align(Alignment.CenterHorizontally),
+                                    contentAlignment = Alignment.BottomCenter
+                                ) {
                                     Column(
-                                        modifier = modifier
-                                            .fillMaxWidth(),
-                                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                                        modifier = modifier.fillMaxSize(),
+                                        verticalArrangement = Arrangement.Bottom,
                                         horizontalAlignment = Alignment.CenterHorizontally
                                     ) {
-                                        AutoCompleteTextField(
-                                            options = Customer.entries.toTypedArray(),
-                                            keyboardController = keyboardController,
-                                            onOptionSelected = { selectedCustomer ->
-                                                viewModel.updateCustomerId(selectedCustomer.customerId)
-                                                viewModel.updateIsCustomerIdValid(true)
-                                            },
-                                            optionToString = { it.customerId },
-                                            onValueChange = { newValue ->
-                                                viewModel.updateCustomerId(newValue)
-                                                viewModel.updateIsCustomerIdValid(true)
-                                            },
-                                            onClearClicked = { newValue ->
-                                                viewModel.updateCustomerId(newValue)
-                                                viewModel.updateIsCustomerIdValid(false)
-                                            },
-                                            label = stringResource(R.string.customer_id_label),
-                                            isValid = uiState.isCustomerIdValid
+
+
+                                        Spacer(modifier = modifier.height(16.dp))
+
+                                        Text(
+                                            modifier = modifier
+                                                .fillMaxWidth(),
+                                            text = ("Waiting the response..."),
+                                            color = Color.White,
+                                            fontSize = 20.sp,
+                                            textAlign = TextAlign.Center
+
+                                        )
+                                        Spacer(modifier = modifier.height(16.dp))
+
+                                        CircularProgressIndicator(
+                                            modifier = modifier
+                                                .size(60.dp)
+                                                .padding(vertical = 16.dp),
+                                            color = Color.LightGray
                                         )
 
-                                        AutoCompleteTextField(
-                                            options = Origin.entries.toTypedArray(),
-                                            keyboardController = keyboardController,
-                                            onOptionSelected = { selectedOrigin ->
-                                                viewModel.updateOrigin(selectedOrigin.origin)
-                                                viewModel.updateIsOriginValid(true)
-                                            },
-                                            optionToString = { it.origin },
-                                            onValueChange = { newValue ->
-                                                viewModel.updateOrigin(newValue)
-                                                viewModel.updateIsOriginValid(true)
-                                            },
-                                            onClearClicked = { newValue ->
-                                                viewModel.updateOrigin(newValue)
-                                                viewModel.updateIsOriginValid(false)
-                                            },
-                                            label = stringResource(R.string.origin_label),
-                                            isValid = uiState.isOriginValid
-                                        )
-
-                                        AutoCompleteTextField(
-                                            options = Destination.entries.toTypedArray(),
-                                            keyboardController = keyboardController,
-                                            onOptionSelected = { selectedDestination ->
-                                                viewModel.updateDestination(selectedDestination.destination)
-                                                viewModel.updateIsDestinationValid(true)
-                                            },
-                                            optionToString = { it.destination },
-                                            onValueChange = { newValue ->
-                                                viewModel.updateDestination(newValue)
-                                                viewModel.updateIsDestinationValid(true)
-                                            },
-                                            onClearClicked = { newValue ->
-                                                viewModel.updateDestination(newValue)
-                                                viewModel.updateIsDestinationValid(false)
-                                            },
-                                            label = stringResource(R.string.destination_label),
-                                            isValid = uiState.isDestinationValid
-                                        )
+                                        Spacer(modifier = modifier.height(16.dp))
                                     }
                                 }
+                            }
+
+                            !uiState.isLoading -> {
+//                                    Column(
+//                                        modifier = modifier
+//                                            .fillMaxWidth(),
+//                                        verticalArrangement = Arrangement.spacedBy(24.dp),
+//                                        horizontalAlignment = Alignment.CenterHorizontally
+//                                    ) {
+                                AutoCompleteTextField(
+                                    options = Customer.entries.toTypedArray(),
+                                    keyboardController = keyboardController,
+                                    onOptionSelected = { selectedCustomer ->
+                                        viewModel.updateCustomerId(selectedCustomer.customerId)
+                                        viewModel.updateIsCustomerIdValid(true)
+                                    },
+                                    optionToString = { it.customerId },
+                                    onValueChange = { newValue ->
+                                        viewModel.updateCustomerId(newValue)
+                                        viewModel.updateIsCustomerIdValid(true)
+                                    },
+                                    onClearClicked = { newValue ->
+                                        viewModel.updateCustomerId(newValue)
+                                        viewModel.updateIsCustomerIdValid(false)
+                                    },
+                                    label = stringResource(R.string.customer_id_label),
+                                    text = uiState.customerId,
+                                    isValid = uiState.isCustomerIdValid
+                                )
+
+                                AutoCompleteTextField(
+                                    options = Origin.entries.toTypedArray(),
+                                    keyboardController = keyboardController,
+                                    onOptionSelected = { selectedOrigin ->
+                                        viewModel.updateOrigin(selectedOrigin.origin)
+                                        viewModel.updateIsOriginValid(true)
+                                    },
+                                    optionToString = { it.origin },
+                                    onValueChange = { newValue ->
+                                        viewModel.updateOrigin(newValue)
+                                        viewModel.updateIsOriginValid(true)
+                                    },
+                                    onClearClicked = { newValue ->
+                                        viewModel.updateOrigin(newValue)
+                                        viewModel.updateIsOriginValid(false)
+                                    },
+                                    label = stringResource(R.string.origin_label),
+                                    text = uiState.origin,
+                                    isValid = uiState.isOriginValid
+                                )
+
+                                AutoCompleteTextField(
+                                    options = Destination.entries.toTypedArray(),
+                                    keyboardController = keyboardController,
+                                    onOptionSelected = { selectedDestination ->
+                                        viewModel.updateDestination(selectedDestination.destination)
+                                        viewModel.updateIsDestinationValid(true)
+                                    },
+                                    optionToString = { it.destination },
+                                    onValueChange = { newValue ->
+                                        viewModel.updateDestination(newValue)
+                                        viewModel.updateIsDestinationValid(true)
+                                    },
+                                    onClearClicked = { newValue ->
+                                        viewModel.updateDestination(newValue)
+                                        viewModel.updateIsDestinationValid(false)
+                                    },
+                                    label = stringResource(R.string.destination_label),
+                                    text = uiState.destination,
+                                    isValid = uiState.isDestinationValid
+                                )
+//                                    }
                             }
                         }
                     }
+//                    }
                 }
 
-                if (!uiState.isLoading) {
-                    item {
-                        RideEstimateButton(
-                            uiState = uiState,
-                            keyboardController = keyboardController,
-                            cancelRequest = { },
-                            confirmRequest = {
-                                viewModel.getRideEstimate(
-                                    customerId = uiState.customerId,
-                                    origin = uiState.origin,
-                                    destination = uiState.destination,
-                                    context = context
-                                )
-                            }
-                        )
-                    }
+
+                item { Spacer(modifier = modifier.height(8.dp)) }
+
+                item {
+                    RideEstimateButton(
+                        uiState = uiState,
+                        keyboardController = keyboardController,
+                        cancelRequest = { debounce = true },
+                        confirmRequest = {
+                            viewModel.getRideEstimate(
+                                customerId = uiState.customerId,
+                                origin = uiState.origin,
+                                destination = uiState.destination,
+                                context = context
+                            )
+                        }
+                    )
                 }
+
 
                 if (displayError) {
                     item {
@@ -291,6 +311,7 @@ fun RideEstimateScreen(
                             )
                             viewModel.updateLoadingState(false)
                         }
+
                         else -> {}
                     }
                 }
@@ -314,8 +335,10 @@ private fun RideEstimateButton(
     ) {
         Button(
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (uiState.isLoading) Color.LightGray else Color.DarkGray,
-                contentColor = if (uiState.isLoading) Color.Black else Color.White
+                containerColor = Color.LightGray,
+                contentColor = Color.DarkGray
+//                containerColor = if (uiState.isLoading) Color.LightGray else Color.DarkGray,
+//                contentColor = if (uiState.isLoading) Color.Black else Color.White
             ),
             enabled = uiState.canRequestAgain,
             onClick = {
@@ -331,6 +354,8 @@ private fun RideEstimateButton(
                 }
             }) {
             Text(
+                modifier = modifier
+                    .padding(8.dp),
                 text =
                 when {
                     uiState.isLoading -> {
@@ -341,7 +366,7 @@ private fun RideEstimateButton(
                         stringResource(R.string.ride_estimate_button_label)
                     }
                 },
-                fontSize = 18.sp
+                fontSize = 22.sp
             )
         }
     }

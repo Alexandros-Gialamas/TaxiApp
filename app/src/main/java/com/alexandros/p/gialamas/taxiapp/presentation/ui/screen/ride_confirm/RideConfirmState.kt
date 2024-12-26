@@ -17,4 +17,5 @@ data class RideConfirmState(
     val duration: String = "",
     val options: List<RideOption> = emptyList(),
     val error: UiText? = null,
+    val restart: Boolean = false
 ) : ViewState

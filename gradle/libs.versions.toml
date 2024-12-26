@@ -1,5 +1,8 @@
 [versions]
 agp = "8.7.3"
+
+
+
 kotlin = "2.0.21"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -9,9 +12,19 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.11.00"
 lifecycleRuntimeComposeAndroid = "2.8.7"
-ksp = "2.0.21-1.0.26"
-daggerHilt = "2.52"
+
+
 kotlinSerialization = "2.0.21"
+
+# ksp
+ksp = "2.0.21-1.0.26"
+
+# Hilt
+hilt = "2.52"
+hiltCompiler = "1.2.0"
+
+# Room
+room = "2.6.1"
 
 # Timber Logging
 timber = "5.0.1"
@@ -20,6 +33,13 @@ timber = "5.0.1"
 
 # Timber Logging
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+
+# Hilt
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }
+androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltCompiler" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltCompiler" }
+
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -40,10 +60,19 @@ androidx-lifecycle-runtime-compose-android = { group = "androidx.lifecycle", nam
 
 
 [plugins]
+
+# ksp
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+
+# hilt
+dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+
+# Room
+room = { id = "androidx.room", version.ref = "room" }
+
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "daggerHilt" }
+
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinSerialization" }
 

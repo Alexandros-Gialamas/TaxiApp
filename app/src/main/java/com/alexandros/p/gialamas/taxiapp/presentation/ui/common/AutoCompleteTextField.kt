@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun <T : Enum<T>> AutoCompleteTextField(
     modifier: Modifier = Modifier,
+    text: String,
     options: Array<T>,
     onClearClicked: (String) -> Unit,
     onValueChange: (String) -> Unit,
@@ -53,7 +54,7 @@ fun <T : Enum<T>> AutoCompleteTextField(
     isValid: Boolean
 ) {
 
-    var text by remember { mutableStateOf("") }
+    var text1 by remember { mutableStateOf("") }
     var suggestionsVisible by remember { mutableStateOf(false) }
     val filteredOptions = remember(text) { options.filter { optionToString(it).contains(text, ignoreCase = true) } }
 
@@ -99,7 +100,7 @@ fun <T : Enum<T>> AutoCompleteTextField(
                 maxLines = 3,
                 value = text,
                 onValueChange = {
-                    text = it
+//                    text = it
                     onValueChange(it)
                     suggestionsVisible = true
                 },
@@ -111,7 +112,7 @@ fun <T : Enum<T>> AutoCompleteTextField(
                     if (text.isNotBlank()) {
                         IconButton(
                             onClick = {
-                                text = ""
+//                                text = ""
                                 onClearClicked("")
                                 suggestionsVisible = false
                             }
@@ -159,7 +160,8 @@ fun <T : Enum<T>> AutoCompleteTextField(
                                     }
                                     .align(Alignment.CenterHorizontally),
                                 onClick = {
-                                    text = optionToString(option)
+//                                    text =
+                                        optionToString(option)
                                     suggestionsVisible = false
                                     onOptionSelected(option)
                                     keyboardController?.hide()

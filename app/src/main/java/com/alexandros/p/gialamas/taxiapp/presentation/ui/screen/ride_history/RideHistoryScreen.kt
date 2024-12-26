@@ -1,6 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,9 +9,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -56,7 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alexandros.p.gialamas.taxiapp.R
-import com.alexandros.p.gialamas.taxiapp.data.mapper.toRide
+import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistory
@@ -75,10 +78,14 @@ import kotlinx.coroutines.delay
 fun RideHistoryScreen(
     modifier: Modifier = Modifier,
     viewModel: RideHistoryViewModel = hiltViewModel<RideHistoryViewModel>(),
+    onBackPress: () -> Unit
 ) {
 
+    BackHandler {
+        onBackPress()
+    }
+
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
-//    val localRidesCollection = viewModel.localRides.collectAsStateWithLifecycle().value
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
@@ -107,7 +114,7 @@ fun RideHistoryScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Gray),
+                .background(Color.DarkGray),
             contentAlignment = Alignment.Center
         ) {
 
@@ -151,61 +158,63 @@ fun RideHistoryScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
-                        Card(
+//                        Card(
+//                            modifier = modifier
+//                                .clip(RoundedCornerShape(16.dp))
+//                                .background(
+//                                    color = Color.DarkGray,
+//                                    shape = RoundedCornerShape(16.dp)
+//                                )
+//                                .fillMaxWidth(0.9f)
+//                                .padding(horizontal = 8.dp, vertical = 24.dp)
+//                        ) {
+                        Column(
                             modifier = modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    color = Color.DarkGray,
-                                    shape = RoundedCornerShape(16.dp)
-                                )
-                                .fillMaxWidth(0.9f)
-                                .padding(horizontal = 8.dp, vertical = 24.dp)
+//                                    .background(Color.DarkGray)
+                                .fillMaxWidth(0.9f),
+//                                    .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(30.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(
-                                modifier = modifier
-                                    .background(Color.DarkGray)
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                AutoCompleteTextField(
-                                    options = Customer.entries.toTypedArray(),
-                                    keyboardController = keyboardController,
-                                    onOptionSelected = {
-                                        viewModel.updateCustomerId(it.customerId)
-                                        viewModel.updateIsCustomerIdValid(true)
-                                    },
-                                    optionToString = { it.customerId },
-                                    onValueChange = {
-                                        viewModel.updateCustomerId(it)
-                                        viewModel.updateIsCustomerIdValid(true)
-                                    },
-                                    onClearClicked = {
-                                        viewModel.updateCustomerId(it)
-                                        viewModel.updateIsCustomerIdValid(false)
-                                    },
-                                    label = stringResource(R.string.customer_id_label),
-                                    isValid = uiState.isCustomerIdValid
-                                )
+                            AutoCompleteTextField(
+                                options = Customer.entries.toTypedArray(),
+                                keyboardController = keyboardController,
+                                onOptionSelected = {
+                                    viewModel.updateCustomerId(it.customerId)
+                                    viewModel.updateIsCustomerIdValid(true)
+                                },
+                                optionToString = { it.customerId },
+                                onValueChange = {
+                                    viewModel.updateCustomerId(it)
+                                    viewModel.updateIsCustomerIdValid(true)
+                                },
+                                onClearClicked = {
+                                    viewModel.updateCustomerId(it)
+                                    viewModel.updateIsCustomerIdValid(false)
+                                },
+                                label = stringResource(R.string.customer_id_label),
+                                text = uiState.customerId,
+                                isValid = uiState.isCustomerIdValid
+                            )
 
-                                DriverSelector(
-                                    uiState = uiState,
-                                    keyboardController = keyboardController,
-                                    onExpandedChange = { viewModel.toggleDriverMenu(it) },
-                                    onDismiss = { viewModel.toggleDriverMenu(it) },
-                                    onDriverSelected = { driver ->
-                                        viewModel.updateDriver(
-                                            driverId = driver.driverId,
-                                            driverName = driver.driverName
-                                        )
-                                    }
-                                )
-                            }
+                            DriverSelector(
+                                uiState = uiState,
+                                keyboardController = keyboardController,
+                                onExpandedChange = { viewModel.toggleDriverMenu(it) },
+                                onDismiss = { viewModel.toggleDriverMenu(it) },
+                                onDriverSelected = { driver ->
+                                    viewModel.updateDriver(
+                                        driverId = driver.driverId,
+                                        driverName = driver.driverName
+                                    )
+                                }
+                            )
                         }
+//                        }
                     }
                 }
 
+                item { Spacer(modifier = modifier.height(8.dp)) }
 
 
                 item {
@@ -229,6 +238,8 @@ fun RideHistoryScreen(
                     )
                 }
 
+                item { Spacer(modifier = modifier.height(8.dp)) }
+
 
                 if (displayError) {
                     item {
@@ -236,29 +247,32 @@ fun RideHistoryScreen(
                     }
                 }
 
+                item { Spacer(modifier = modifier.height(8.dp)) }
+
                 if (uiState.isLocalLoading || uiState.isNetworkLoading) {
                     item {
                         CircularProgressIndicator(color = if (uiState.isLocalLoading) Color.Red else Color.White)
                     }
                 }
 
+                item { Spacer(modifier = modifier.height(8.dp)) }
 
 
-            uiState.localRides?.let { data ->
-                when (data) {
-                    is Result.Error -> {
+                uiState.localRides?.let { data ->
+                    when (data) {
+                        is Result.Error -> {
 
-                    }
-
-                    is Result.Success -> {
-                        items(data.data) { ride ->
-                            LocalRideItem(ride)
                         }
-                    }
 
-                    else -> {}
+                        is Result.Success -> {
+                            items(data.data) { ride ->
+                                LocalRideItem(ride)
+                            }
+                        }
+
+                        else -> {}
+                    }
                 }
-            }
 
 //            when (localRidesCollection) {
 //                is Result.Error -> {
@@ -273,7 +287,6 @@ fun RideHistoryScreen(
 //
 //                else -> {}
 //            }
-
 
 
                 uiState.rideHistory?.let { result ->
@@ -300,7 +313,7 @@ fun RideHistoryScreen(
 
 
 @Composable
-private fun LocalRideItem(ride: Ride) {
+private fun LocalRideItem(ride: RideEntity) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,7 +326,7 @@ private fun LocalRideItem(ride: Ride) {
             Text(text = "Ride ID: ${ride.id}", fontWeight = FontWeight.Bold)
             Text(text = "Customer ID: ${ride.customerId}")
             Text(text = "Date: ${ride.date}")
-            Text(text = "Driver: ${ride.driver.name}")
+            Text(text = "Driver: ${ride.driverName}")
             Text(text = "Origin: ${ride.origin}")
             Text(text = "Destination: ${ride.destination}")
             Text(text = "Distance: ${ride.distance}")
@@ -331,7 +344,7 @@ private fun HistoryRideItem(ride: RideHistory) {
     Card(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(color = Color.DarkGray, shape = RoundedCornerShape(16.dp))
+            .background(color = Color.Gray, shape = RoundedCornerShape(16.dp))
             .fillMaxWidth(0.9f)
             .padding(16.dp)
     ) {
@@ -357,10 +370,10 @@ private fun HistoryRideItem(ride: RideHistory) {
                 )
             }
 
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-            ){
+            ) {
                 Text(
                     modifier = Modifier
                         .padding(end = 6.dp),
@@ -378,10 +391,10 @@ private fun HistoryRideItem(ride: RideHistory) {
                 }
             }
 
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-            ){
+            ) {
                 Text(
                     modifier = Modifier
                         .padding(end = 6.dp),
@@ -399,10 +412,10 @@ private fun HistoryRideItem(ride: RideHistory) {
                 }
             }
 
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-            ){
+            ) {
                 Text(
                     modifier = Modifier
                         .padding(end = 6.dp),
@@ -461,10 +474,10 @@ private fun HistoryRideItem(ride: RideHistory) {
                 )
             }
 
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-            ){
+            ) {
                 Text(
                     modifier = Modifier
                         .padding(end = 6.dp),
@@ -480,10 +493,10 @@ private fun HistoryRideItem(ride: RideHistory) {
                 )
             }
 
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-            ){
+            ) {
                 Text(
                     modifier = Modifier
                         .padding(end = 6.dp),
@@ -499,10 +512,10 @@ private fun HistoryRideItem(ride: RideHistory) {
                 )
             }
 
-            Row (
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-            ){
+            ) {
                 Text(
                     modifier = Modifier
                         .padding(end = 6.dp),
@@ -563,8 +576,10 @@ private fun RideHistoryButton(
     ) {
         Button(
             colors = ButtonDefaults.buttonColors(
-                containerColor = if (uiState.isNetworkLoading) Color.LightGray else Color.DarkGray,
-                contentColor = if (uiState.isNetworkLoading) Color.Black else Color.White
+                containerColor = Color.LightGray,
+                contentColor = Color.DarkGray,
+//                containerColor = if (uiState.isNetworkLoading) Color.LightGray else Color.DarkGray,
+//                contentColor = if (uiState.isNetworkLoading) Color.Black else Color.White
             ),
             enabled = uiState.canRequestAgain,
             onClick = {
@@ -580,6 +595,8 @@ private fun RideHistoryButton(
                 }
             }) {
             Text(
+                modifier = modifier
+                    .padding(8.dp),
                 text =
                 when {
                     uiState.isNetworkLoading -> {
@@ -590,7 +607,7 @@ private fun RideHistoryButton(
                         stringResource(R.string.ride_history_button_label)
                     }
                 },
-                fontSize = 18.sp
+                fontSize = 22.sp
             )
         }
     }
