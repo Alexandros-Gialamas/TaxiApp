@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.domain.usecase
+package com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_estimate
 
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
@@ -14,7 +14,7 @@ class GetRideEstimateUseCase @Inject constructor(
         customerId: String,
         origin: String,
         destination: String
-    ): Result<RideEstimateResponse, RideEstimateError.Network> = rideRepository.getRideEstimate(
+    ): Result<RideEstimateResponse, RideEstimateError> = rideRepository.getRideEstimate(
             customerId = customerId,
             origin = origin,
             destination = destination

@@ -3,14 +3,13 @@ package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
 import com.alexandros.p.gialamas.taxiapp.data.util.checkInternetConnectivity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
-import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryUserDataValidator
+import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history.ValidateRideHistoryDataUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistory
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetLocalRideHistoryUseCase
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.GetRideHistoryUseCase
+import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history.GetLocalRideHistoryUseCase
+import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history.GetRideHistoryUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.asHistoryUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CompletableJob
@@ -33,7 +32,7 @@ import javax.inject.Inject
 class RideHistoryViewModel @Inject constructor(
     private val getRideHistoryUseCase: GetRideHistoryUseCase,
     private val getLocalRideHistoryUseCase: GetLocalRideHistoryUseCase,
-    private val rideHistoryUserDataValidator: RideHistoryUserDataValidator
+    private val validateRideHistoryDataUseCase: ValidateRideHistoryDataUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<RideHistoryState>(RideHistoryState())
@@ -74,7 +73,7 @@ class RideHistoryViewModel @Inject constructor(
                 canRequestAgain = false
             )
         }
-        delay(5000L)
+        delay(3000L)
         _uiState.update { currentState ->
             currentState.copy(
                 canRequestAgain = true
@@ -86,6 +85,9 @@ class RideHistoryViewModel @Inject constructor(
     fun getRideHistory(customerId: String, driverId: Int?, context: Context) {
         Timber.tag("RideHistoryViewModel")
             .d("getRideHistory called with customerId: $customerId, driverId: $driverId")
+
+        clearError()
+
 
         if (!checkInternetConnectivity(context)) {
             _uiState.update {
@@ -103,165 +105,141 @@ class RideHistoryViewModel @Inject constructor(
                 )
             }
 
-        apiRequestJob = Job()
+            apiRequestJob = Job()
 
-        apiRequestJob?.let {
-            viewModelScope.launch(Dispatchers.IO + apiRequestJob as CompletableJob) {
+            apiRequestJob?.let {
+                viewModelScope.launch(apiRequestJob as CompletableJob) {
 
-                when (val result = rideHistoryUserDataValidator.validation(customerId)) {
-                    is Result.Error -> {
-                        withContext(Dispatchers.Main) {
+                    when (val result = validateRideHistoryDataUseCase.validation(customerId)) {
+                        is Result.Error -> {
                             _uiState.update {
                                 it.copy(
-                                    error = when (result.error) {
-                                        RideHistoryError.UserDataValidation.INVALID_CUSTOMER_ID -> result.error.asHistoryUiText()
-                                    }
+                                    error = result.error.asHistoryUiText()
                                 )
                             }
                         }
-                    }
 
-                    is Result.Success -> {
-                        try {
-                            withContext(Dispatchers.Main) {
-                                clearError()
+                        is Result.Success -> {
+                            try {
                                 _uiState.update {
                                     it.copy(
                                         isNetworkLoading = true,
                                         rideHistory = Result.Success(emptyList())
                                     )
                                 }
-                            }
 
-                            when (val networkRides = getRideHistoryUseCase(customerId, driverId)) {
-                                is Result.Error -> {
-                                    _uiState.update {
-                                        it.copy(
-                                            error = networkRides.error.asHistoryUiText(),
-                                            isNetworkLoading = false
-                                        )
+
+                                when (val networkRides =
+                                    getRideHistoryUseCase(customerId, driverId)) {
+                                    is Result.Error -> {
+                                        _uiState.update {
+                                            it.copy(
+                                                error = networkRides.error.asHistoryUiText(),
+                                                isNetworkLoading = false
+                                            )
+                                        }
                                     }
-                                }
 
-                                is Result.Success -> {
-                                    when (val ridesResult = networkRides.data) {
-                                        is RideHistoryResponse.Error -> {
+                                    is Result.Success -> {
+                                        var historyRides = emptyList<RideHistory>()
+                                        if (uiState.value.driverId != null) {
+                                            val resultOfRides =
+                                                networkRides.data.rides.filter { rides ->
+                                                    rides.driver.name.equals(
+                                                        uiState.value.driverName,
+                                                        ignoreCase = true
+                                                    )
+                                                }
+
+                                            historyRides =
+                                                resultOfRides.ifEmpty { emptyList() }
+                                        } else {
+                                            historyRides = networkRides.data.rides
+                                        }
+
+                                        if (historyRides.isEmpty()) {
+                                            _uiState.update { currentState ->
+                                                currentState.copy(
+                                                    error = RideHistoryError.Network.NO_RIDES_FOUND.asHistoryUiText(),
+                                                    isNetworkLoading = false
+                                                )
+                                            }
+                                        } else {
                                             _uiState.update {
                                                 it.copy(
-                                                    error = when (ridesResult.response.status.value) {
-                                                        400 -> {
-                                                            RideHistoryError.Network.DRIVER_NOT_FOUND.asHistoryUiText()
-                                                        }
-
-                                                        404 -> {
-                                                            RideHistoryError.Network.INVALID_DATA.asHistoryUiText()
-                                                        }
-
-                                                        406 -> {
-                                                            RideHistoryError.Network.INVALID_DISTANCE.asHistoryUiText()
-                                                        }
-
-                                                        else -> {
-                                                            RideHistoryError.Network.UNKNOWN_ERROR.asHistoryUiText()
-                                                        }
-                                                    },
+                                                    rideHistory = Result.Success(
+                                                        historyRides
+                                                    ),
                                                     isNetworkLoading = false
                                                 )
                                             }
                                         }
-
-                                        is RideHistoryResponse.HistoryResponse -> {
-                                            var historyRides = emptyList<RideHistory>()
-                                            if (uiState.value.driverId != null) {
-                                                val resultOfRides =
-                                                    ridesResult.rides.filter { rides ->
-                                                        rides.driver.name.equals(
-                                                            uiState.value.driverName,
-                                                            ignoreCase = true
-                                                        )
-                                                    }
-
-                                                historyRides = resultOfRides.ifEmpty { emptyList() }
-                                            }
-
-                                            withContext(Dispatchers.Main) {
-                                                clearError()
-                                                if (historyRides.isEmpty()) {
-                                                    _uiState.update { currentState ->
-                                                        currentState.copy(
-                                                            error = RideHistoryError.Network.NO_RIDES_FOUND.asHistoryUiText(),
-                                                            isNetworkLoading = false
-                                                        )
-                                                    }
-                                                } else {
-                                                    _uiState.update {
-                                                        it.copy(
-                                                            rideHistory = Result.Success(
-                                                                historyRides
-                                                            ),
-                                                            isNetworkLoading = false
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
                                     }
+
+                                    else -> {}
                                 }
-
-                                else -> {}
-                            }
-
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
+                            } catch (e: Exception) {
                                 _uiState.update {
                                     it.copy(
                                         rideHistory = Result.Error(RideHistoryError.Network.UNKNOWN_ERROR),
                                         isNetworkLoading = false
                                     )
                                 }
+                                _uiState.update { currentState ->
+                                    currentState.copy(rideHistory = Result.Success(emptyList()))
+                                }
                             }
                         }
-                    }
 
-                    else -> {}
+                        else -> {}
+                    }
                 }
             }
         }
     }
-    }
 
     fun getLocalRidesHistory(customerId: String, driverId: Int?) {
-        clearError()
+
+        _uiState.update {
+            it.copy(
+                isLocalLoading = true
+            )
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
 
-            try {
-                withContext(Dispatchers.Main) {
-                    _uiState.update { it.copy(isLocalLoading = true) }
-                }
-                getLocalRideHistoryUseCase(
-                    customerId,
-                    driverId
-                ).collectLatest { localRides ->
-                    Timber.tag("RideHistoryViewModel").d("localRides are: $localRides")
-                    withContext(Dispatchers.Main) {
-                        _uiState.update {
-                            it.copy(
-                                localRides = Result.Success(data = localRides),
-                                isLocalLoading = false
-                            )
+            getLocalRideHistoryUseCase(
+                customerId,
+                driverId
+            ).collect { result ->
+                when (result) {
+                    is Result.Error -> {
+                        withContext(Dispatchers.Main) {
+                            Timber.tag("error load local rides").d("error load local rides ${result.error}")
+                            _uiState.update {
+                                it.copy(
+                                    error = result.error.asHistoryUiText(),
+                                    isLocalLoading = false
+                                )
+                            }
                         }
                     }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _uiState.update {
-                        it.copy(
-                            localRides = Result.Error(RideHistoryError.Local.LOCAL_ERROR),
-                            isLocalLoading = false
-                        )
+
+                    is Result.Success -> {
+                        withContext(Dispatchers.Main) {
+                            Timber.tag("load local rides").d("load local rides ${result.data}")
+                            _uiState.update {
+                                it.copy(
+                                    localRides = Result.Success(result.data),
+                                    isLocalLoading = false
+                                )
+                            }
+                        }
                     }
+
+                    Result.Idle -> Result.Idle
                 }
-                Timber.tag("RideHistoryViewModel").e("localRides fetch error = ${e.message}")
+
             }
         }
     }

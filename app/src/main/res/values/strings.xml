@@ -27,9 +27,9 @@
 
 
     // Error Messages
-    <string name="empty_customer_id_field">"Customer ID" field is empty!</string>
-    <string name="empty_origin_field">"Origin" field is empty!</string>
-    <string name="empty_destination_field">"Destination" field is empty!</string>
+    <string name="empty_customer_id_field_error">"Customer ID" field is empty!</string>
+    <string name="empty_origin_field_error">"Origin" field is empty!</string>
+    <string name="empty_destination_field_error">"Destination" field is empty!</string>
     <string name="network_error">Network error. Please check your connection.</string>
     <string name="invalid_data_error">Invalid data provided. Please check your input.</string>
     <string name="invalid_location_error">Invalid data provided. Please check both location input.</string>
@@ -38,9 +38,10 @@
     <string name="invalid_distance_error">Invalid distance for the selected driver.</string>
     <string name="no_rides_found_error">No rides found with these criteria.</string>
     <string name="unknown_error">An unexpected error occurred. Please try again later.</string>
-    <string name="local_error">Local rides history is unavailable</string>
-    <string name="save_ride_failed">Failed to save the ride due to invalid distance of the driver</string>
-    <string name="ride_not_confirmed">Ride is not confirmed. Please select another ride.</string>
+    <string name="fail_to_fetch_local_rides">Failed to load local rides! Please try again…</string>
+    <string name="save_ride_failed_error">Failed to save the ride due to invalid distance of the driver</string>
+    <string name="ride_not_confirmed_error">Ride is not confirmed. Please select another ride.</string>
+    <string name="invalid_state_data_error">"Opps! Invalid data occur, please try again…"</string>
 
 
 </resources>

@@ -7,7 +7,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
-import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.RideConfirmScreen
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideEstimateScreen
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.RideHistoryScreen
@@ -17,7 +16,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
-
 
 
 inline fun <reified T : Any> navigationCustomArgument(isNullable: Boolean = false): Pair<KType, CustomNavType<T>> {
@@ -39,6 +37,7 @@ fun NavigationController() {
         composable<Screens.SplashScreen> {
             SplashScreen(
                 navigateToRideEstimateScreen = {
+                    navController.popBackStack()
                     navController.navigate(Screens.RideEstimateScreen)
                 }
             )
@@ -48,6 +47,7 @@ fun NavigationController() {
         composable<Screens.RideEstimateScreen> {
             RideEstimateScreen(
                 onRideSelected = { result: RideEstimate, customerId: String, origin: String, destination: String ->
+                    navController.popBackStack()
                     navController.navigate(
                         Screens.RideConfirmScreen(
                             result,
@@ -70,15 +70,28 @@ fun NavigationController() {
                 origin = args.origin,
                 destination = args.destination,
                 onBackPress = {
+                    navController.popBackStack()
                     navController.navigate(Screens.RideEstimateScreen)
                 },
-                onRideConfirmed = { navController.navigate(Screens.RideHistoryScreen) }
+                onRestart = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.RideEstimateScreen)
+                },
+                onRideConfirmed = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.RideHistoryScreen)
+                }
             )
         }
 
 
         composable<Screens.RideHistoryScreen> {
-            RideHistoryScreen()
+            RideHistoryScreen(
+                onBackPress = {
+                    navController.popBackStack()
+                    navController.navigate(Screens.RideEstimateScreen)
+                }
+            )
         }
     }
 

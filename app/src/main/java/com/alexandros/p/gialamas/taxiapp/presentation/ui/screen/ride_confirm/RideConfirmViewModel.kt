@@ -9,15 +9,15 @@ import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.data.util.checkInternetConnectivity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
-import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmDriverDistanceValidator
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.ValidateRideConfirmDriverDistance
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmError
-import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
+import com.alexandros.p.gialamas.taxiapp.domain.error.onSuccess
 import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.ConfirmRideUseCase
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.SaveRideUseCase
+import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_confirm.ConfirmRideUseCase
+import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_confirm.SaveRideUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.asConfirmUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +38,6 @@ import javax.inject.Inject
 @HiltViewModel
 class RideConfirmViewModel @Inject constructor(
     private val confirmRideUseCase: ConfirmRideUseCase,
-    private val rideConfirmDriverDistanceValidator: RideConfirmDriverDistanceValidator,
     private val saveRideUseCase: SaveRideUseCase
 ) : ViewModel() {
 
@@ -121,6 +120,8 @@ class RideConfirmViewModel @Inject constructor(
 
     fun confirmRide(context: Context) {
 
+        clearError()
+
         if (!checkInternetConnectivity(context)) {
             _uiState.update {
                 it.copy(
@@ -129,108 +130,100 @@ class RideConfirmViewModel @Inject constructor(
             }
         } else {
 
-        viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch(Dispatchers.IO) {
+                if ((uiState.value.rideOption != null) && (uiState.value.rideEstimate != null)) {
 
-            if ((uiState.value.rideOption != null) && (uiState.value.rideEstimate != null)) {
-
-                when (val result = rideConfirmDriverDistanceValidator.validation(
-                    rideOption = uiState.value.rideOption!!,
-                    distance = uiState.value.rideEstimate!!.distance
-                )
-                ) {
-                    is Result.Error -> {
-                        withContext(Dispatchers.Main) {
-
-                            _uiState.update {
-                                it.copy(
-                                    error = when (result.error) {
-                                        RideConfirmError.NetWork.INVALID_DISTANCE -> RideConfirmError.NetWork.INVALID_DISTANCE.asConfirmUiText()
-                                        RideConfirmError.NetWork.NETWORK_ERROR -> RideConfirmError.NetWork.NETWORK_ERROR.asConfirmUiText()
-                                        RideConfirmError.NetWork.UNKNOWN_ERROR -> RideConfirmError.NetWork.UNKNOWN_ERROR.asConfirmUiText()
-                                        RideConfirmError.NetWork.RIDE_NOT_CONFIRMED -> RideConfirmError.NetWork.RIDE_NOT_CONFIRMED.asConfirmUiText()
-                                    }
-                                )
-                            }
+                    withContext(Dispatchers.Main){
+                        _uiState.update {
+                            it.copy(
+                                isLoading = true
+                            )
                         }
                     }
 
-                    is Result.Success -> {
-                        withContext(Dispatchers.Main) {
-                            clearError()
-                        }
-                        try {
-                            val rideRequest = rideRequest()
-                            when (val rideConfirmed = confirmRideUseCase(rideRequest)) {
-                                is Result.Error -> {
+                    try {
+                        val rideRequest = rideRequest()
+
+                        when (val isRideConfirmed = confirmRideUseCase(rideRequest)) {
+                            is Result.Error -> {
+                                withContext(Dispatchers.Main){
+                                    _uiState.update {
+                                        it.copy(
+                                            error = isRideConfirmed.error.asConfirmUiText(),
+                                            isRideConfirmed = false,
+                                            isLoading = false
+                                        )
+                                    }
+                                }
+
+                            }
+                            is Result.Success -> {
+                                try {
+                                    val newRide = rideRequest.toRide()
+                                    newRide?.let { saveRideUseCase(it) }
+                                    Timber.tag("viewModel").d("Saving ride: $newRide")
+
                                     withContext(Dispatchers.Main) {
                                         _uiState.update {
                                             it.copy(
-                                                error = when (rideConfirmed.error) {
-                                                    RideConfirmError.NetWork.INVALID_DISTANCE -> RideConfirmError.NetWork.INVALID_DISTANCE.asConfirmUiText()
-                                                    RideConfirmError.NetWork.NETWORK_ERROR -> RideConfirmError.NetWork.NETWORK_ERROR.asConfirmUiText()
-                                                    RideConfirmError.NetWork.UNKNOWN_ERROR -> RideConfirmError.NetWork.UNKNOWN_ERROR.asConfirmUiText()
-                                                    RideConfirmError.NetWork.RIDE_NOT_CONFIRMED -> RideConfirmError.NetWork.RIDE_NOT_CONFIRMED.asConfirmUiText()
-                                                }
+                                                isRideConfirmed = true,
+                                                isLoading = false
+                                            )
+                                        }
+                                    }
+
+                                } catch (e: Exception) {
+                                    withContext(Dispatchers.Main) {
+                                        _uiState.update {
+                                            it.copy(
+                                                error = RideConfirmError.Local.FAILED_TO_SAVE_THE_RIDE.asConfirmUiText(),
+                                                isRideConfirmed = false
                                             )
                                         }
                                     }
                                 }
 
-                                is Result.Success<Boolean, RideConfirmError.NetWork> -> {
-                                    val ride = getRide(rideRequest).toEntity()
-                                    Timber.tag("RideConfirmViewModel")
-                                        .d("Ride : $ride \n Ride Request : $rideRequest")
-                                    when (rideConfirmed.data) {
-                                        true -> {
-                                            rideRequest?.let {
-                                                saveRideUseCase(
-                                                    RideEntity(
-                                                        date = ride.date,
-                                                        customerId = ride.customerId,
-                                                        origin = ride.origin,
-                                                        destination = ride.destination,
-                                                        distance = ride.distance,
-                                                        duration = ride.duration,
-                                                        driverId = ride.driverId,
-                                                        driverName = ride.driverName,
-                                                        value = ride.value
-                                                    )
-                                                )
-                                            }.runCatching {
-                                                withContext(Dispatchers.Main) {
-                                                    _uiState.update {
-                                                        it.copy(
-                                                            error = RideConfirmError.Local.FAILED_TO_SAVE_THE_RIDE.asConfirmUiText()
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                            withContext(Dispatchers.Main) {
-                                                _uiState.update {
-                                                    it.copy(
-                                                        isRideConfirmed = true
-                                                    )
-                                                }
-                                            }
-                                        }
 
-                                        false -> {
-                                            withContext(Dispatchers.Main) {
-                                                _uiState.update {
-                                                    it.copy(
-                                                        error = RideConfirmError.NetWork.RIDE_NOT_CONFIRMED.asConfirmUiText()
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
 
-//                                when (rideConfirmed.data) {
+//                                when (isRideConfirmed.data) {
 //                                    true -> {
+//
+//                                        RideConfirmError.NetWork.INVALID_DISTANCE.asConfirmUiText()
+//                                    }
+
+//                                    false -> {
+//                                        saveRideUseCase.invoke(isRideConfirmed)
+//                                        isRideConfirmed.data
+//                                        val ride = getRide(rideRequest).toEntity()
+
+
 //                                        rideRequest?.let {
-//                                            saveRideUseCase(ride = getRide(rideRequest))
+//                                            saveRideUseCase(
+//                                                RideEntity(
+//                                                    date = ride.date,
+//                                                    customerId = ride.customerId,
+//                                                    origin = ride.origin,
+//                                                    destination = ride.destination,
+//                                                    distance = ride.distance,
+//                                                    duration = ride.duration,
+//                                                    driverId = ride.driverId,
+//                                                    driverName = ride.driverName,
+//                                                    value = ride.value
+//                                                )
+//                                            )
 //                                        }
+//                                            .runCatching {
+//                                            withContext(Dispatchers.Main) {
+//                                                _uiState.update {
+//                                                    it.copy(
+//                                                        error = RideConfirmError.Local.FAILED_TO_SAVE_THE_RIDE.asConfirmUiText()
+//                                                    )
+//                                                }
+//                                            }
+//                                        }
+
+
+
 //                                        withContext(Dispatchers.Main) {
 //                                            _uiState.update {
 //                                                it.copy(
@@ -238,30 +231,39 @@ class RideConfirmViewModel @Inject constructor(
 //                                                )
 //                                            }
 //                                        }
+//
 //                                    }
-//
-//                                    false -> {
-//
 //                                }
-//                            }
 
-                                else -> {}
+//                                Result.Idle -> Result.Idle
                             }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) {
-                                _uiState.update {
-                                    it.copy(
-                                        error = RideConfirmError.NetWork.UNKNOWN_ERROR.asConfirmUiText()
-                                    )
-                                }
+
+                            Result.Idle -> Result.Idle
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(
+                                    error = RideConfirmError.NetWork.UNKNOWN_ERROR.asConfirmUiText(),
+                                    isRideConfirmed = false
+                                )
                             }
                         }
                     }
 
-                    else -> {}
+
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _uiState.update {
+                            it.copy(
+                                error = RideConfirmError.Local.INVALID_STATE_DATA.asConfirmUiText(),
+                                isRideConfirmed = false,
+                                restart = true
+                            )
+                        }
+                    }
                 }
-            } // else case to do
+            }
         }
     }
-}
 }

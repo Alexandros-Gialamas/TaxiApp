@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.domain.usecase
+package com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history
 
 
 import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
@@ -11,7 +11,7 @@ class GetRideHistoryUseCase @Inject constructor(
     private val rideRepository: RideRepository
 ) {
 
-     suspend operator fun invoke(customerId: String, driverId: Int? = null): Result<RideHistoryResponse, RideHistoryError.Network> {
+     suspend operator fun invoke(customerId: String, driverId: Int? = null): Result<RideHistoryResponse, RideHistoryError> {
         return rideRepository.getRideHistory(customerId, driverId)
     }
 

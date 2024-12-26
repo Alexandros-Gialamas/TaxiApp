@@ -2,13 +2,21 @@ package com.alexandros.p.gialamas.taxiapp.source.remote.api
 
 import android.util.Log
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
+import com.alexandros.p.gialamas.taxiapp.data.model.RideConfirmationResult
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
 import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.RideConfirmResponseError
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.ValidateRideConfirmDriverDistance
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_estimate.RideEstimateResponseError
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_estimate.ValidateRideEstimateResponse
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_history.RideHistoryResponseError
 import com.alexandros.p.gialamas.taxiapp.domain.remote.api.RideService
 import com.alexandros.p.gialamas.taxiapp.data.source.remote.api.RideServiceImpl
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
+import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmError
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
+import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
 import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.asEstimateUiText
 import io.ktor.client.HttpClient
@@ -63,7 +71,14 @@ class RideServiceImplTest {
                 json(json)
             }
         }
-        rideService = RideServiceImpl(httpClient)
+        rideService = RideServiceImpl(
+            httpClient,
+            rideEstimateResponseError = RideEstimateResponseError(),
+            validateRideEstimateResponse = ValidateRideEstimateResponse(),
+            rideConfirmResponseError = RideConfirmResponseError(),
+            rideHistoryResponseError = RideHistoryResponseError(),
+            validateRideConfirmDriverDistance = ValidateRideConfirmDriverDistance(),
+        )
     }
 
     private fun dealWithRequest(encodedPath: String): String {
@@ -141,32 +156,39 @@ class RideServiceImplTest {
             origin = "Origin A",
             destination = "Destination B"
         )
-        val result : Result<RideEstimateResponse, RideEstimateError.Network> =
+        val result: Result<RideEstimateResponse, RideEstimateError> =
             rideService.getRideEstimate(request.customerId, request.origin, request.destination)
 
-        if (result is Result.Success){
-            val estimateResponse = result.data as RideEstimateResponse.EstimateResponse
+        if (result is Result.Success) {
+            val estimateResponse = result.data
             assertEquals(3.2, estimateResponse.distance, 0.001)
             assertEquals("12 mins", estimateResponse.duration)
         }
     }
 
     @Test
-    fun `confirmRide returns true`() = runBlocking {
+    fun `confirmRide returns true`(): Unit = runBlocking {
         val ride = ConfirmRideRequest(
             origin = "Origin A",
             destination = "Destination B",
             distance = 5.0,
             duration = "20 mins",
-            driver = com.alexandros.p.gialamas.taxiapp.domain.model.Driver(1, "Driver 1"),
+            driver = Driver(3, "Driver 3"),
             value = 25.0,
             customerId = "CT01",
 
             )
-        when (val response = rideService.confirmRide(ride)) {
-            is Result.Error -> {}
-            is Result.Success -> { assertTrue(response.data) }
-           else -> {}
+        val response : Result<RideConfirmationResult, RideConfirmError> =
+            rideService.confirmRide(ride)
+
+        when (response) {
+            is Result.Error -> {
+                assertEquals(RideConfirmError.NetWork.INVALID_DISTANCE, response.error)
+            }
+            is Result.Success -> {
+                assertEquals(true, response.data)
+            }
+            Result.Idle -> Result.Idle
         }
     }
 
@@ -175,11 +197,11 @@ class RideServiceImplTest {
 
         val result = rideService.getRideHistory("CT01")
 
-        if (result is Result.Success){
-            val historyResponse = result.data as RideHistoryResponse.HistoryResponse
+        if (result is Result.Success) {
+            val historyResponse = result.data
             assertEquals(1, historyResponse.rides.size)
             assertEquals("CT01", historyResponse.customerId)
-            }
+        }
 
     }
 

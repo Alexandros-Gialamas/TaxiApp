@@ -16,11 +16,12 @@ interface RideDao {
 
 
     @Query("SELECT * FROM rides_table WHERE customerId = :customerId")
-    fun getAllRides(customerId: String): Flow<List<RideEntity>>
+     fun getAllRides(customerId: String): Flow<List<RideEntity>>
+
 
 
     @Query("SELECT * FROM rides_table WHERE driverId = :driverId AND customerId = :customerId")
-    fun getLocalRideHistory(customerId: String, driverId: Int?): Flow<List<RideEntity>>
+     fun getLocalRideHistory(customerId: String, driverId: Int?): Flow<List<RideEntity>>
 
 
 }
