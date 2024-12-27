@@ -9,14 +9,12 @@ import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.data.util.checkInternetConnectivity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
-import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.ValidateRideConfirmDriverDistance
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmError
-import com.alexandros.p.gialamas.taxiapp.domain.error.onSuccess
 import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
-import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_confirm.ConfirmRideUseCase
+import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_confirm.InsertRideUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_confirm.SaveRideUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.asConfirmUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,15 +27,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
 class RideConfirmViewModel @Inject constructor(
     private val confirmRideUseCase: ConfirmRideUseCase,
+    private val insertRideUseCase: InsertRideUseCase,
     private val saveRideUseCase: SaveRideUseCase
 ) : ViewModel() {
 
@@ -99,22 +94,47 @@ class RideConfirmViewModel @Inject constructor(
         )
     }
 
-    private fun getRide(confirmRideRequest: ConfirmRideRequest): Ride {
-        val currentDate =
-            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(
-                Date()
-            )
-        return Ride(
-            date = currentDate,
-            customerId = confirmRideRequest.customerId,
-            origin = confirmRideRequest.origin,
-            destination = confirmRideRequest.destination,
-            distance = confirmRideRequest.distance,
-            duration = confirmRideRequest.duration,
-            driver = confirmRideRequest.driver,
-            value = confirmRideRequest.value
-        )
 
+    private fun saveRide(ride: RideEntity){
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                when (val result  = saveRideUseCase(ride)) {
+                    is Result.Error -> {
+                        withContext(Dispatchers.Main){
+                            _uiState.update {
+                                it.copy(
+                                    error = result.error.asConfirmUiText(),
+                                    isLoading = false
+                                )
+                            }
+                        }
+                        return@launch
+                    }
+                    is Result.Success -> {
+                        withContext(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(
+                                    isRideConfirmed = true,
+                                    isLoading = false
+                                )
+                            }
+                        }
+                    }
+                    Result.Idle -> Result.Idle
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _uiState.update {
+                        it.copy(
+                            error = RideConfirmError.Local.FAILED_TO_SAVE_THE_RIDE.asConfirmUiText(),
+                            isRideConfirmed = false,
+                            isLoading = false
+                        )
+                    }
+                }
+                return@launch
+            }
+        }
     }
 
 
@@ -128,6 +148,7 @@ class RideConfirmViewModel @Inject constructor(
                     error = RideConfirmError.NetWork.NETWORK_ERROR.asConfirmUiText()
                 )
             }
+            return
         } else {
 
             viewModelScope.launch(Dispatchers.IO) {
@@ -158,84 +179,7 @@ class RideConfirmViewModel @Inject constructor(
 
                             }
                             is Result.Success -> {
-                                try {
-                                    val newRide = rideRequest.toRide()
-                                    newRide?.let { saveRideUseCase(it) }
-                                    Timber.tag("viewModel").d("Saving ride: $newRide")
-
-                                    withContext(Dispatchers.Main) {
-                                        _uiState.update {
-                                            it.copy(
-                                                isRideConfirmed = true,
-                                                isLoading = false
-                                            )
-                                        }
-                                    }
-
-                                } catch (e: Exception) {
-                                    withContext(Dispatchers.Main) {
-                                        _uiState.update {
-                                            it.copy(
-                                                error = RideConfirmError.Local.FAILED_TO_SAVE_THE_RIDE.asConfirmUiText(),
-                                                isRideConfirmed = false
-                                            )
-                                        }
-                                    }
-                                }
-
-
-
-//                                when (isRideConfirmed.data) {
-//                                    true -> {
-//
-//                                        RideConfirmError.NetWork.INVALID_DISTANCE.asConfirmUiText()
-//                                    }
-
-//                                    false -> {
-//                                        saveRideUseCase.invoke(isRideConfirmed)
-//                                        isRideConfirmed.data
-//                                        val ride = getRide(rideRequest).toEntity()
-
-
-//                                        rideRequest?.let {
-//                                            saveRideUseCase(
-//                                                RideEntity(
-//                                                    date = ride.date,
-//                                                    customerId = ride.customerId,
-//                                                    origin = ride.origin,
-//                                                    destination = ride.destination,
-//                                                    distance = ride.distance,
-//                                                    duration = ride.duration,
-//                                                    driverId = ride.driverId,
-//                                                    driverName = ride.driverName,
-//                                                    value = ride.value
-//                                                )
-//                                            )
-//                                        }
-//                                            .runCatching {
-//                                            withContext(Dispatchers.Main) {
-//                                                _uiState.update {
-//                                                    it.copy(
-//                                                        error = RideConfirmError.Local.FAILED_TO_SAVE_THE_RIDE.asConfirmUiText()
-//                                                    )
-//                                                }
-//                                            }
-//                                        }
-
-
-
-//                                        withContext(Dispatchers.Main) {
-//                                            _uiState.update {
-//                                                it.copy(
-//                                                    isRideConfirmed = true
-//                                                )
-//                                            }
-//                                        }
-//
-//                                    }
-//                                }
-
-//                                Result.Idle -> Result.Idle
+                                    saveRide(rideRequest.toRide().toEntity())
                             }
 
                             Result.Idle -> Result.Idle
@@ -245,10 +189,12 @@ class RideConfirmViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(
                                     error = RideConfirmError.NetWork.UNKNOWN_ERROR.asConfirmUiText(),
-                                    isRideConfirmed = false
+                                    isRideConfirmed = false,
+                                    isLoading = false
                                 )
                             }
                         }
+                        return@launch
                     }
 
 
@@ -258,6 +204,7 @@ class RideConfirmViewModel @Inject constructor(
                             it.copy(
                                 error = RideConfirmError.Local.INVALID_STATE_DATA.asConfirmUiText(),
                                 isRideConfirmed = false,
+                                isLoading = false,
                                 restart = true
                             )
                         }

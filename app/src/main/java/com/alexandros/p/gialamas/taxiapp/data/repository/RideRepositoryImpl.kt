@@ -19,12 +19,39 @@ class RideRepositoryImpl @Inject constructor(
 ) : RideRepository {
 
 
-    override suspend fun saveRide(ride: RideEntity) {
+    override suspend fun insertRide(ride: RideEntity) {
         rideDao.insertRide(ride)
         Timber.tag("RideConfirmRepositoryImpl").d("saveRide called with ride: $ride")
     }
 
-    override fun getLocalRideHistory(customerId: String, driverId: Int?): Flow<Result<List<RideEntity>, RideHistoryError>> = flow {
+    override suspend fun saveRide(
+        date: String?,
+        customerId: String,
+        origin: String,
+        destination: String,
+        distance: Double,
+        duration: String,
+        driverId: Int,
+        driverName: String,
+        value: Double
+    ) {
+        return rideDao.saveRide(
+            date = date,
+            customerId = customerId,
+            origin = origin,
+            destination = destination,
+            distance = distance,
+            duration = duration,
+            driverId = driverId,
+            driverName = driverName,
+            value = value
+        )
+    }
+
+    override fun getLocalRideHistory(
+        customerId: String,
+        driverId: Int?
+    ): Flow<Result<List<RideEntity>, RideHistoryError>> = flow {
         val result = if (driverId == null) {
             rideDao.getAllRides(customerId = customerId)
         } else {
@@ -34,12 +61,13 @@ class RideRepositoryImpl @Inject constructor(
 
         try {
             result.collect { rides ->
-                emit( Result.Success(rides))
+                emit(Result.Success(rides))
                 Timber.tag("RideConfirmRepositoryImpl").d("getLocalRideHistory result: $result")
                 Timber.tag("RideConfirmRepositoryImpl").d("getLocalRideHistory rides: $rides")
             }
         } catch (e: Exception) {
-            Timber.tag("RideConfirmRepositoryImpl").d("getLocalRideHistory error: $e : ${e.message}")
+            Timber.tag("RideConfirmRepositoryImpl")
+                .d("getLocalRideHistory error: $e : ${e.message}")
             emit(Result.Error(RideHistoryError.Local.FAIL_TO_FETCH_LOCAL_RIDES))
         }
 //        return result

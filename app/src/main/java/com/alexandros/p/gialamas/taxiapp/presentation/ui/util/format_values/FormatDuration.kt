@@ -47,3 +47,12 @@ fun formatDurationTimeToString(duration: String): String {
     }
 
 }
+
+
+@SuppressLint("DefaultLocale")
+fun formatDurationForRideEntity(durationInSeconds: String): String {
+    val totalSeconds = durationInSeconds.toIntOrNull() ?: 0 // Handle potential errors
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    return String.format("%d:%02d", hours, minutes)
+}
