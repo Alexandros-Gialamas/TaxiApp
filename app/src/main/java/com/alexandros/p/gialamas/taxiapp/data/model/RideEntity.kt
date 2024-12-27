@@ -3,7 +3,10 @@ package com.alexandros.p.gialamas.taxiapp.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.alexandros.p.gialamas.taxiapp.data.util.Constants
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = Constants.RIDES_TABLE_NAME)
 data class RideEntity(
     @PrimaryKey(autoGenerate = true)

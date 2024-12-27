@@ -8,23 +8,13 @@ import com.alexandros.p.gialamas.taxiapp.domain.repository.RideRepository
 import timber.log.Timber
 import javax.inject.Inject
 
-class SaveRideUseCase @Inject constructor(
+class InsertRideUseCase @Inject constructor(
 private val rideRepository: RideRepository
 ) {
 
     suspend operator fun invoke(ride: RideEntity) : EmptyResult<RideConfirmError> {
         return try {
-            rideRepository.saveRide(
-                date = ride.date,
-                customerId = ride.customerId,
-                origin = ride.origin,
-                destination = ride.destination,
-                distance = ride.distance,
-                duration = ride.duration,
-                driverId = ride.driverId,
-                driverName = ride.driverName,
-                value = ride.value
-            )
+            rideRepository.insertRide(ride)
             Timber.tag("SaveRideUseCase").d("Ride to save: $ride")
             Result.Success(Unit)
         } catch (e: Exception) {

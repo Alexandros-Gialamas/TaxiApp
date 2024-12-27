@@ -6,11 +6,13 @@ import androidx.lifecycle.viewModelScope
 import com.alexandros.p.gialamas.taxiapp.data.util.checkInternetConnectivity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
-import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history.ValidateRideHistoryDataUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideHistory
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history.GetLocalRideHistoryUseCase
 import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history.GetRideHistoryUseCase
+import com.alexandros.p.gialamas.taxiapp.domain.usecase.ride_history.ValidateRideHistoryDataUseCase
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.asHistoryUiText
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractDate
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +21,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -46,21 +47,35 @@ class RideHistoryViewModel @Inject constructor(
             initialValue = RideHistoryState()
         )
 
-//    val localRides: StateFlow<Result<List<Ride>, RideHistoryError>> =
-//        getLocalRideHistoryUseCase(_uiState.value.customerId, _uiState.value.driverId)
-//            .map {
-//                Result.Success<List<Ride>, RideHistoryError>(it)
-//            }
-//            .catch {
-//                Result.Error<List<Ride>, RideHistoryError>(
-//                    RideHistoryError.Local.LOCAL_ERROR
-//                )
-//            }
-//            .stateIn(
-//                scope = viewModelScope,
-//                started = SharingStarted.WhileSubscribed(5000L),
-//                initialValue = Result.Idle
-//            )
+    fun updateCustomerId(customerId: String) {
+        _uiState.update { it.copy(customerId = customerId) }
+    }
+
+    fun updateIsCustomerIdValid(isCustomerIdValid: Boolean) {
+        _uiState.update { it.copy(isCustomerIdValid = isCustomerIdValid) }
+    }
+
+    private fun clearError() {
+        _uiState.update {
+            it.copy(
+                networkError = null,
+                localError = null
+            )
+        }
+    }
+
+    fun updateDriver(driverId: Int?, driverName: String) {
+        _uiState.update {
+            it.copy(
+                driverId = driverId,
+                driverName = driverName
+            )
+        }
+    }
+
+    fun toggleDriverMenu(isExpanded: Boolean) {
+        _uiState.update { it.copy(isDriverMenuExpanded = isExpanded) }
+    }
 
     private var apiRequestJob: Job? = null
 
@@ -83,20 +98,26 @@ class RideHistoryViewModel @Inject constructor(
 
 
     fun getRideHistory(customerId: String, driverId: Int?, context: Context) {
-        Timber.tag("RideHistoryViewModel")
-            .d("getRideHistory called with customerId: $customerId, driverId: $driverId")
 
         clearError()
 
+        _uiState.update {
+            it.copy(
+                rides = emptyList()
+            )
+        }
+
+        getLocalRidesHistory(customerId, driverId)
 
         if (!checkInternetConnectivity(context)) {
             _uiState.update {
                 it.copy(
-                    error = RideHistoryError.Network.NETWORK_ERROR.asHistoryUiText(),
+                    networkError = RideHistoryError.Network.NETWORK_ERROR.asHistoryUiText(),
                     isNetworkLoading = false,
                     isLocalLoading = false
                 )
             }
+            return
         } else {
 
             _uiState.update {
@@ -114,7 +135,7 @@ class RideHistoryViewModel @Inject constructor(
                         is Result.Error -> {
                             _uiState.update {
                                 it.copy(
-                                    error = result.error.asHistoryUiText()
+                                    networkError = result.error.asHistoryUiText()
                                 )
                             }
                         }
@@ -134,7 +155,7 @@ class RideHistoryViewModel @Inject constructor(
                                     is Result.Error -> {
                                         _uiState.update {
                                             it.copy(
-                                                error = networkRides.error.asHistoryUiText(),
+                                                networkError = networkRides.error.asHistoryUiText(),
                                                 isNetworkLoading = false
                                             )
                                         }
@@ -160,7 +181,7 @@ class RideHistoryViewModel @Inject constructor(
                                         if (historyRides.isEmpty()) {
                                             _uiState.update { currentState ->
                                                 currentState.copy(
-                                                    error = RideHistoryError.Network.NO_RIDES_FOUND.asHistoryUiText(),
+                                                    networkError = RideHistoryError.Network.NO_RIDES_FOUND.asHistoryUiText(),
                                                     isNetworkLoading = false
                                                 )
                                             }
@@ -168,7 +189,49 @@ class RideHistoryViewModel @Inject constructor(
                                             _uiState.update {
                                                 it.copy(
                                                     rideHistory = Result.Success(
-                                                        historyRides
+                                                        historyRides.ifEmpty { emptyList() }
+                                                    ),
+                                                    isNetworkLoading = false
+                                                )
+                                            }
+                                        }
+                                        val networkRidesModel =
+                                            historyRides.map { Rides.Network(it) }
+                                        val currentRides: List<Rides> = _uiState.value.rides
+                                        val combineRides = (currentRides + networkRidesModel)
+                                        withContext(Dispatchers.Main) {
+                                            _uiState.update {
+                                                it.copy(
+                                                    rides = combineRides.sortedWith(
+                                                        compareByDescending<Rides> { rides ->
+                                                            when (rides) {
+                                                                is Rides.Local -> rides.rideEntity.date?.let {
+                                                                    extractDate(
+                                                                        rides.rideEntity.date
+                                                                    )
+                                                                }
+
+                                                                is Rides.Network -> rides.rideHistory.date?.let {
+                                                                    extractDate(
+                                                                        rides.rideHistory.date
+                                                                    )
+                                                                }
+                                                            }
+                                                        }.thenByDescending { rides ->
+                                                            when (rides) {
+                                                                is Rides.Local -> rides.rideEntity.date?.let {
+                                                                    extractTime(
+                                                                        rides.rideEntity.date
+                                                                    )
+                                                                }
+
+                                                                is Rides.Network -> rides.rideHistory.date?.let {
+                                                                    extractTime(
+                                                                        rides.rideHistory.date
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
                                                     ),
                                                     isNetworkLoading = false
                                                 )
@@ -176,7 +239,7 @@ class RideHistoryViewModel @Inject constructor(
                                         }
                                     }
 
-                                    else -> {}
+                                    Result.Idle -> Result.Idle
                                 }
                             } catch (e: Exception) {
                                 _uiState.update {
@@ -186,12 +249,16 @@ class RideHistoryViewModel @Inject constructor(
                                     )
                                 }
                                 _uiState.update { currentState ->
-                                    currentState.copy(rideHistory = Result.Success(emptyList()))
+                                    currentState.copy(
+                                        rideHistory = Result.Success(emptyList()),
+                                        isNetworkLoading = false
+                                    )
                                 }
+                                return@launch
                             }
                         }
 
-                        else -> {}
+                        Result.Idle -> Result.Idle
                     }
                 }
             }
@@ -215,10 +282,11 @@ class RideHistoryViewModel @Inject constructor(
                 when (result) {
                     is Result.Error -> {
                         withContext(Dispatchers.Main) {
-                            Timber.tag("error load local rides").d("error load local rides ${result.error}")
+                            Timber.tag("error load local rides")
+                                .d("error load local rides ${result.error}")
                             _uiState.update {
                                 it.copy(
-                                    error = result.error.asHistoryUiText(),
+                                    localError = result.error.asHistoryUiText(),
                                     isLocalLoading = false
                                 )
                             }
@@ -235,6 +303,47 @@ class RideHistoryViewModel @Inject constructor(
                                 )
                             }
                         }
+                        val localRidesModel = result.data.map { Rides.Local(it) }
+                        val currentRides: List<Rides> = _uiState.value.rides
+                        val combineRides = (currentRides + localRidesModel)
+                        withContext(Dispatchers.Main) {
+                            _uiState.update {
+                                it.copy(
+                                    rides = combineRides.sortedWith(
+                                        compareByDescending<Rides> { rides ->
+                                            when (rides) {
+                                                is Rides.Local -> rides.rideEntity.date?.let {
+                                                    extractDate(
+                                                        rides.rideEntity.date
+                                                    )
+                                                }
+
+                                                is Rides.Network -> rides.rideHistory.date?.let {
+                                                    extractDate(
+                                                        rides.rideHistory.date
+                                                    )
+                                                }
+                                            }
+                                        }.thenByDescending { rides ->
+                                            when (rides) {
+                                                is Rides.Local -> rides.rideEntity.date?.let {
+                                                    extractTime(
+                                                        rides.rideEntity.date
+                                                    )
+                                                }
+
+                                                is Rides.Network -> rides.rideHistory.date?.let {
+                                                    extractTime(
+                                                        rides.rideHistory.date
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    ),
+                                    isLocalLoading = false
+                                )
+                            }
+                        }
                     }
 
                     Result.Idle -> Result.Idle
@@ -244,30 +353,5 @@ class RideHistoryViewModel @Inject constructor(
         }
     }
 
-
-    fun updateCustomerId(customerId: String) {
-        _uiState.update { it.copy(customerId = customerId) }
-    }
-
-    fun updateIsCustomerIdValid(isCustomerIdValid: Boolean) {
-        _uiState.update { it.copy(isCustomerIdValid = isCustomerIdValid) }
-    }
-
-    private fun clearError() {
-        _uiState.update { it.copy(error = null) }
-    }
-
-    fun updateDriver(driverId: Int?, driverName: String) {
-        _uiState.update {
-            it.copy(
-                driverId = driverId,
-                driverName = driverName
-            )
-        }
-    }
-
-    fun toggleDriverMenu(isExpanded: Boolean) {
-        _uiState.update { it.copy(isDriverMenuExpanded = isExpanded) }
-    }
 
 }

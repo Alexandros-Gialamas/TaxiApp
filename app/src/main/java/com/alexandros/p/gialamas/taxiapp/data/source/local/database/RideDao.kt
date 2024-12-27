@@ -14,6 +14,23 @@ interface RideDao {
     suspend fun insertRide(ride: RideEntity){
     }
 
+    @Query("""
+            INSERT INTO rides_table (date, customerId, origin, destination, distance, duration, driverId, driverName, value) 
+            VALUES (:date, :customerId, :origin, :destination, :distance, :duration, :driverId, :driverName, :value) 
+        """)
+    suspend fun saveRide(
+        date: String?,
+        customerId: String,
+        origin: String,
+        destination: String,
+        distance: Double,
+        duration: String,
+        driverId: Int,
+        driverName: String,
+        value: Double
+    )
+
+
 
     @Query("SELECT * FROM rides_table WHERE customerId = :customerId")
      fun getAllRides(customerId: String): Flow<List<RideEntity>>

@@ -15,7 +15,19 @@ interface RideRepository {
 
 
 
-    suspend fun saveRide(ride: RideEntity)
+    suspend fun insertRide(ride: RideEntity)
+
+    suspend fun saveRide(
+        date: String?,
+        customerId: String,
+        origin: String,
+        destination: String,
+        distance: Double,
+        duration: String,
+        driverId: Int,
+        driverName: String,
+        value: Double
+    )
 
    suspend fun getRideEstimate(
         customerId: String,

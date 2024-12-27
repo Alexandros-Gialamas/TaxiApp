@@ -1,7 +1,6 @@
 package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate
 
 
-import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,10 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +42,8 @@ import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.AutoCompleteTextField
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiAppScaffold
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.components.DisplayEstimateErrorText
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.components.RideEstimateButton
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Customer
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Destination
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Origin
@@ -72,7 +69,6 @@ fun RideEstimateScreen(
         painterResource(R.drawable.splash_screen)
     }
 
-    val backgroundColor = Color.Transparent
 
     var displayError by remember { mutableStateOf(false) }
     var debounce by remember { mutableStateOf(false) }
@@ -139,19 +135,10 @@ fun RideEstimateScreen(
 
 
                 item {
-//                    Card(
-//                        modifier = modifier
-//                            .clip(RoundedCornerShape(16.dp))
-//                            .background(color = backgroundColor, shape = RoundedCornerShape(16.dp))
-//                            .fillMaxWidth(0.9f)
-//                            .padding(horizontal = 8.dp, vertical = 24.dp)
-//                    ) {
                     Column(
                         modifier = modifier
-//                                .background(Color.DarkGray)
                             .fillMaxWidth(0.9f)
                             .fillMaxHeight(),
-//                                .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(30.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -198,12 +185,6 @@ fun RideEstimateScreen(
                             }
 
                             !uiState.isLoading -> {
-//                                    Column(
-//                                        modifier = modifier
-//                                            .fillMaxWidth(),
-//                                        verticalArrangement = Arrangement.spacedBy(24.dp),
-//                                        horizontalAlignment = Alignment.CenterHorizontally
-//                                    ) {
                                 AutoCompleteTextField(
                                     options = Customer.entries.toTypedArray(),
                                     keyboardController = keyboardController,
@@ -266,11 +247,9 @@ fun RideEstimateScreen(
                                     text = uiState.destination,
                                     isValid = uiState.isDestinationValid
                                 )
-//                                    }
                             }
                         }
                     }
-//                    }
                 }
 
 
@@ -295,13 +274,22 @@ fun RideEstimateScreen(
 
                 if (displayError) {
                     item {
-                        DisplayErrorText(uiState = uiState, context = context)
+                        DisplayEstimateErrorText(uiState = uiState, context = context)
                     }
                 }
+
 
                 uiState.rideEstimate.let { result ->
 
                     when (result) {
+                        is Result.Error -> {
+                            if (displayError) {
+                                item {
+                                    DisplayEstimateErrorText(uiState = uiState, context = context)
+                                }
+                            }
+                        }
+
                         is Result.Success -> {
                             onRideSelected(
                                 result.data,
@@ -312,7 +300,7 @@ fun RideEstimateScreen(
                             viewModel.updateLoadingState(false)
                         }
 
-                        else -> {}
+                        Result.Idle -> Result.Idle
                     }
                 }
             }
@@ -320,84 +308,9 @@ fun RideEstimateScreen(
     }
 }
 
-@Composable
-private fun RideEstimateButton(
-    modifier: Modifier = Modifier,
-    keyboardController: SoftwareKeyboardController?,
-    uiState: RideEstimateState,
-    cancelRequest: () -> Unit,
-    confirmRequest: () -> Unit
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
-        Button(
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.LightGray,
-                contentColor = Color.DarkGray
-//                containerColor = if (uiState.isLoading) Color.LightGray else Color.DarkGray,
-//                contentColor = if (uiState.isLoading) Color.Black else Color.White
-            ),
-            enabled = uiState.canRequestAgain,
-            onClick = {
-                keyboardController?.hide()
-                when {
-                    uiState.isLoading -> {
-                        cancelRequest()
-                    }
 
-                    else -> {
-                        confirmRequest()
-                    }
-                }
-            }) {
-            Text(
-                modifier = modifier
-                    .padding(8.dp),
-                text =
-                when {
-                    uiState.isLoading -> {
-                        stringResource(R.string.cancel_button_label)
-                    }
 
-                    else -> {
-                        stringResource(R.string.ride_estimate_button_label)
-                    }
-                },
-                fontSize = 22.sp
-            )
-        }
-    }
-}
 
-@Composable
-private fun DisplayErrorText(
-    uiState: RideEstimateState,
-    context: Context
-) {
-    uiState.error?.let {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-
-        }
-        Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            text = uiState.error.asString(context),
-            softWrap = true,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            fontSize = 18.sp
-        )
-    }
-}
 
 
 

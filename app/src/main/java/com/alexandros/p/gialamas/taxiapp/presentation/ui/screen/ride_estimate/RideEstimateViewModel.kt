@@ -231,6 +231,7 @@ class RideEstimateViewModel @Inject constructor(
                                         )
                                     }
                                 }
+                                return@launch
                             }
                         }
                         // Handle the Idle state if necessary.
