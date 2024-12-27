@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history
+package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.state
 
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEntity
 import com.alexandros.p.gialamas.taxiapp.domain.error.Result
@@ -19,12 +19,14 @@ data class RideHistoryState(
     val rides: List<Rides> = emptyList(),
     val isLocalLoading: Boolean = false,
     val isNetworkLoading: Boolean = false,
-    val canRequestAgain: Boolean = true,
+//    val canRequestAgain: Boolean = true,
     val customerId: String = "",
     val driverId: Int? = Driver.DRIVER_ALL.driverId,
     val driverName: String = Driver.DRIVER_ALL.driverName,
     val isDriverMenuExpanded: Boolean = false,
+//    val isDriverSelectMenuDismissed: Boolean = false,
     val networkError: UiText? = null,
     val localError: UiText? = null,
-    val isCustomerIdValid: Boolean = true
+    val isCustomerIdValid: Boolean = true,
+    val isRideHistoryCallReady: Boolean = true
 ) : ViewState

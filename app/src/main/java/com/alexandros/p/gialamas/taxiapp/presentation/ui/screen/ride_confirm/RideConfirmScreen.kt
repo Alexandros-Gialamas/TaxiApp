@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,8 +43,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alexandros.p.gialamas.taxiapp.R
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiAppScaffold
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.action.RideConfirmAction
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.components.ConfirmRideContent
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.components.RideConfirmOptionItem
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.viewmodel.RideConfirmViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -53,7 +54,6 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
-import kotlinx.coroutines.delay
 
 @Composable
 fun RideConfirmScreen(
@@ -72,7 +72,15 @@ fun RideConfirmScreen(
     }
 
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
-
+    val context = LocalContext.current
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(
+            LatLng(
+                result.origin.latitude,
+                result.origin.longitude
+            ), 11f
+        )
+    }
     var alpha by remember { mutableFloatStateOf(1f) }
 
     alpha = if (uiState.isLoading) {
@@ -90,38 +98,20 @@ fun RideConfirmScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.collectState(result, customerId, origin, destination)
-    }
-
-
-    LaunchedEffect(uiState.isRideConfirmed, uiState.restart) {
-
-        if (uiState.isRideConfirmed) onRideConfirmed()
-
-        if (uiState.restart) onRestart()
-    }
-
-    var debounce by remember { mutableStateOf(false) }
-    LaunchedEffect(debounce) {
-        if (debounce) {
-            delay(3000L)
-            debounce = false
-        }
-    }
-
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(
-            LatLng(
-                result.origin.latitude,
-                result.origin.longitude
-            ), 11f
+        viewModel.handleAction(
+            RideConfirmAction.LoadData(
+                rideEstimate = result,
+                customerId = customerId,
+                origin = origin,
+                destination = destination
+            )
         )
     }
 
-
-    val context = LocalContext.current
-
+    LaunchedEffect(uiState.isRideConfirmed, uiState.restart) {
+        if (uiState.isRideConfirmed) onRideConfirmed()
+        if (uiState.restart) onRestart()
+    }
 
     LaunchedEffect(uiState.error) {
         if (uiState.error != null) {
@@ -250,11 +240,9 @@ fun RideConfirmScreen(
                 items(result.options, key = { it.id }) { rideOption ->
                     RideConfirmOptionItem(
                         rideOption = rideOption,
-                        debounce = debounce,
-                        onRideOptionSelected = {
-                            debounce = true
-                            viewModel.collectRideOption(it)
-                            viewModel.confirmRide(context)
+                        isConfirmRideCallReady = uiState.isConfirmRideCallReady,
+                        onAction = {
+                            viewModel.handleAction(it)
                         }
                     )
                 }

@@ -51,12 +51,12 @@ fun <T : Enum<T>> AutoCompleteTextField(
     optionToString: (T) -> String = { it.name },
     keyboardController: SoftwareKeyboardController? = null,
     label: String,
-    isValid: Boolean
+    isValid: Boolean,
 ) {
 
-    var text1 by remember { mutableStateOf("") }
     var suggestionsVisible by remember { mutableStateOf(false) }
-    val filteredOptions = remember(text) { options.filter { optionToString(it).contains(text, ignoreCase = true) } }
+    val filteredOptions =
+        remember(text) { options.filter { optionToString(it).contains(text, ignoreCase = true) } }
 
     Column(
         modifier = modifier
@@ -100,7 +100,6 @@ fun <T : Enum<T>> AutoCompleteTextField(
                 maxLines = 3,
                 value = text,
                 onValueChange = {
-//                    text = it
                     onValueChange(it)
                     suggestionsVisible = true
                 },
@@ -112,7 +111,6 @@ fun <T : Enum<T>> AutoCompleteTextField(
                     if (text.isNotBlank()) {
                         IconButton(
                             onClick = {
-//                                text = ""
                                 onClearClicked("")
                                 suggestionsVisible = false
                             }
@@ -123,73 +121,74 @@ fun <T : Enum<T>> AutoCompleteTextField(
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = suggestionsVisible)
                     }
                 },
-
-                )
+            )
 
             if (suggestionsVisible && filteredOptions.isNotEmpty()) {
 
                 MaterialTheme(
                     shapes = Shapes(RoundedCornerShape(16.dp)),
                     content = {
-                    ExposedDropdownMenu(
-                        modifier = modifier
-                            .background(Color.DarkGray)
-                            .border(width = 1.dp, shape = RoundedCornerShape(16.dp), color = Color.LightGray),
-                        expanded = suggestionsVisible,
-                        onDismissRequest = { suggestionsVisible = false }
-                    ) {
-                        filteredOptions.forEach { option ->
-                            DropdownMenuItem(
-                                modifier = modifier
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .drawBehind {
-                                        val strokeWidth = 1.dp.toPx()
-                                        val lineWidth = size.width * 0.7f
-                                        drawLine(
-                                            color = Color.LightGray,
-                                            start = Offset(
-                                                (size.width - lineWidth) / 2,
-                                                size.height - strokeWidth / 2
-                                            ),
-                                            end = Offset(
-                                                (size.width + lineWidth) / 2,
-                                                size.height - strokeWidth / 2
-                                            ),
-                                            strokeWidth = strokeWidth
+                        ExposedDropdownMenu(
+                            modifier = modifier
+                                .background(Color.DarkGray)
+                                .border(
+                                    width = 1.dp,
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = Color.LightGray
+                                ),
+                            expanded = suggestionsVisible,
+                            onDismissRequest = { suggestionsVisible = false }
+                        ) {
+                            filteredOptions.forEach { option ->
+                                DropdownMenuItem(
+                                    modifier = modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .drawBehind {
+                                            val strokeWidth = 1.dp.toPx()
+                                            val lineWidth = size.width * 0.7f
+                                            drawLine(
+                                                color = Color.LightGray,
+                                                start = Offset(
+                                                    (size.width - lineWidth) / 2,
+                                                    size.height - strokeWidth / 2
+                                                ),
+                                                end = Offset(
+                                                    (size.width + lineWidth) / 2,
+                                                    size.height - strokeWidth / 2
+                                                ),
+                                                strokeWidth = strokeWidth
+                                            )
+                                        }
+                                        .align(Alignment.CenterHorizontally),
+                                    onClick = {
+                                        optionToString(option)
+                                        suggestionsVisible = false
+                                        onOptionSelected(option)
+                                        keyboardController?.hide()
+                                    },
+                                    text = {
+                                        Text(
+                                            modifier = modifier
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .fillMaxWidth()
+                                                .padding(vertical = 16.dp),
+                                            text = optionToString(option),
+                                            textAlign = TextAlign.Center,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color.White,
                                         )
                                     }
-                                    .align(Alignment.CenterHorizontally),
-                                onClick = {
-//                                    text =
-                                        optionToString(option)
-                                    suggestionsVisible = false
-                                    onOptionSelected(option)
-                                    keyboardController?.hide()
-                                },
-                                text = {
-                                    Text(
-                                        modifier = modifier
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .fillMaxWidth()
-                                            .padding(vertical = 16.dp),
-                                        text = optionToString(option),
-                                        textAlign = TextAlign.Center,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color.White,
-                                    )
-                                }
-                            )
+                                )
+                            }
                         }
-
                     }
-
-                }
                 )
-
             }
         }
     }
 }
+
+
 
 
 

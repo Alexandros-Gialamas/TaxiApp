@@ -5,6 +5,7 @@ import com.alexandros.p.gialamas.taxiapp.data.model.RideConfirmationResult
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
 import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.network.ActiveNetworkError
 import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.RideConfirmResponseError
 import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.ValidateRideConfirmDriverDistance
 import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_estimate.RideEstimateResponseError
@@ -46,7 +47,8 @@ class RideServiceImpl @Inject constructor(
     private val validateRideEstimateResponse: ValidateRideEstimateResponse,
     private val rideConfirmResponseError: RideConfirmResponseError,
     private val rideHistoryResponseError: RideHistoryResponseError,
-    private val validateRideConfirmDriverDistance: ValidateRideConfirmDriverDistance
+    private val validateRideConfirmDriverDistance: ValidateRideConfirmDriverDistance,
+    private val activeNetworkError: ActiveNetworkError
 
 ) : RideService {
 
@@ -65,56 +67,65 @@ class RideServiceImpl @Inject constructor(
         destination: String
     ): Result<RideEstimateResponse, RideEstimateError> {
 
-        // Construct the ride estimate request object.
-        val rideRequest = RideEstimateRequest(
-            customerId = customerId,
-            origin = origin,
-            destination = destination
-        )
+       return when (activeNetworkError.checkNetwork()) {
 
-        // Make a POST request to the ride estimate endpoint.
-        val response = httpClient.post(Constants.API_RIDE_ESTIMATE_ENDPOINT) {
-            contentType(ContentType.Application.Json)
-            setBody(
-                rideRequest
-            )
-        }
-        // Handle the response within a try-catch block to catch potential network or parsing errors.
-        return try {
-            // Check if the response status code indicates success.
-            if (response.status.isSuccess()) {
-                // Deserialize the response body to a RideEstimateResponse object.
-                val estimateResponse = response.body<RideEstimateResponse>()
-
-                // Validate the received RideEstimateResponse using the injected validator.
-                when (validateRideEstimateResponse.validation(estimateResponse)) {
-                    // If validation fails, map it to an INVALID_LOCATION error.
-                    is Result.Error -> Result.Error(RideEstimateError.Network.INVALID_LOCATION)
-                    // If validation succeeds, return a Success result with the validated data.
-                    is Result.Success -> {
-                        Result.Success(
-                            data = RideEstimateResponse(
-                                origin = estimateResponse.origin,
-                                destination = estimateResponse.destination,
-                                distance = estimateResponse.distance,
-                                duration = estimateResponse.duration,
-                                options = estimateResponse.options,
-                                routeResponse = estimateResponse.routeResponse
-                            )
-                        )
-                    }
-
-                    Result.Idle -> Result.Idle
-                }
-
-
-            } else {
-                // If the response status code is not successful, map the error using the injected error mapper.
-                Result.Error(rideEstimateResponseError.mapError(response))
+            false -> {
+                Result.Error(RideEstimateError.Network.NETWORK_ERROR)
             }
-        } catch (e: Exception) {
-            Timber.e(e, "Error fetching ride estimate: ${e.message}")
-            Result.Error(RideEstimateError.Network.UNKNOWN_ERROR)
+
+            true -> {
+                // Construct the ride estimate request object.
+                val rideRequest = RideEstimateRequest(
+                    customerId = customerId,
+                    origin = origin,
+                    destination = destination
+                )
+
+                // Make a POST request to the ride estimate endpoint.
+                val response = httpClient.post(Constants.API_RIDE_ESTIMATE_ENDPOINT) {
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        rideRequest
+                    )
+                }
+                // Handle the response within a try-catch block to catch potential network or parsing errors.
+                return try {
+                    // Check if the response status code indicates success.
+                    if (response.status.isSuccess()) {
+                        // Deserialize the response body to a RideEstimateResponse object.
+                        val estimateResponse = response.body<RideEstimateResponse>()
+
+                        // Validate the received RideEstimateResponse using the injected validator.
+                        when (validateRideEstimateResponse.validation(estimateResponse)) {
+                            // If validation fails, map it to an INVALID_LOCATION error.
+                            is Result.Error -> Result.Error(RideEstimateError.Network.INVALID_LOCATION)
+                            // If validation succeeds, return a Success result with the validated data.
+                            is Result.Success -> {
+                                Result.Success(
+                                    data = RideEstimateResponse(
+                                        origin = estimateResponse.origin,
+                                        destination = estimateResponse.destination,
+                                        distance = estimateResponse.distance,
+                                        duration = estimateResponse.duration,
+                                        options = estimateResponse.options,
+                                        routeResponse = estimateResponse.routeResponse
+                                    )
+                                )
+                            }
+
+                            Result.Idle -> Result.Idle
+                        }
+
+
+                    } else {
+                        // If the response status code is not successful, map the error using the injected error mapper.
+                        Result.Error(rideEstimateResponseError.mapError(response))
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error fetching ride estimate: ${e.message}")
+                    Result.Error(RideEstimateError.Network.UNKNOWN_ERROR)
+                }
+            }
         }
     }
 
@@ -125,50 +136,61 @@ class RideServiceImpl @Inject constructor(
      * @param confirmRideRequest The request containing ride confirmation details.
      * @return A [Result] that encapsulates either a [RideConfirmationResult] on success or a [RideConfirmError] on failure.
      */
-    override suspend fun confirmRide(confirmRideRequest: ConfirmRideRequest): Result<RideConfirmationResult, RideConfirmError> {
-        // Construct the ride confirmation request object.
-        val rideRequest = ConfirmRideRequest(
-            customerId = confirmRideRequest.customerId,
-            origin = confirmRideRequest.origin,
-            destination = confirmRideRequest.destination,
-            distance = confirmRideRequest.distance,
-            duration = confirmRideRequest.duration,
-            driver = confirmRideRequest.driver,
-            value = confirmRideRequest.value
-        )
-        // Use a try-catch block to handle potential exceptions during the network call.
-        try {
-            // Make a PATCH request to the ride confirmation endpoint.
-            val response =
-                httpClient.patch(Constants.API_CONFIRM_RIDE_ENDPOINT) {
-                    contentType(ContentType.Application.Json)
-                    setBody(
-                        rideRequest
-                    )
-                }
-            // Check if the response status code indicates success.
-            return if (response.status.isSuccess()) {
-                // Deserialize the response body to a RideConfirmationResult object.
-                val responseBody = response.body<RideConfirmationResult>()
-                // Validate the confirmation request, particularly the driver's distance.
-                when (val result = validateRideConfirmDriverDistance.validation(rideRequest)) {
-                    // If validation fails, return an Error result with the specific error.
-                    is Result.Error -> Result.Error(result.error)
-                    // If validation succeeds, return a Success result with the confirmation result.
-                    is Result.Success -> Result.Success(RideConfirmationResult(responseBody.success))
+    override suspend fun confirmRide(
+        confirmRideRequest: ConfirmRideRequest
+    ): Result<RideConfirmationResult, RideConfirmError> {
 
-                    Result.Idle -> Result.Idle
-                }
-            } else {
-                // If the response status code is not successful, map the error using the injected error mapper.
-                Result.Error(rideConfirmResponseError.mapError(response))
+        return when (activeNetworkError.checkNetwork()) {
+
+            false -> {
+                Result.Error(RideConfirmError.NetWork.NETWORK_ERROR)
             }
 
-        } catch (e: Exception) {
-            Timber.e(e, "Error confirming the ride : ${e.message}")
-            return Result.Error(RideConfirmError.NetWork.UNKNOWN_ERROR)
-        }
+            true -> {
+                // Construct the ride confirmation request object.
+                val rideRequest = ConfirmRideRequest(
+                    customerId = confirmRideRequest.customerId,
+                    origin = confirmRideRequest.origin,
+                    destination = confirmRideRequest.destination,
+                    distance = confirmRideRequest.distance,
+                    duration = confirmRideRequest.duration,
+                    driver = confirmRideRequest.driver,
+                    value = confirmRideRequest.value
+                )
+                // Use a try-catch block to handle potential exceptions during the network call.
+                try {
+                    // Make a PATCH request to the ride confirmation endpoint.
+                    val response =
+                        httpClient.patch(Constants.API_CONFIRM_RIDE_ENDPOINT) {
+                            contentType(ContentType.Application.Json)
+                            setBody(
+                                rideRequest
+                            )
+                        }
+                    // Check if the response status code indicates success.
+                    return if (response.status.isSuccess()) {
+                        // Deserialize the response body to a RideConfirmationResult object.
+                        val responseBody = response.body<RideConfirmationResult>()
+                        // Validate the confirmation request, particularly the driver's distance.
+                        when (val result = validateRideConfirmDriverDistance.validation(rideRequest)) {
+                            // If validation fails, return an Error result with the specific error.
+                            is Result.Error -> Result.Error(result.error)
+                            // If validation succeeds, return a Success result with the confirmation result.
+                            is Result.Success -> Result.Success(RideConfirmationResult(responseBody.success))
 
+                            Result.Idle -> Result.Idle
+                        }
+                    } else {
+                        // If the response status code is not successful, map the error using the injected error mapper.
+                        Result.Error(rideConfirmResponseError.mapError(response))
+                    }
+
+                } catch (e: Exception) {
+                    Timber.e(e, "Error confirming the ride : ${e.message}")
+                    return Result.Error(RideConfirmError.NetWork.UNKNOWN_ERROR)
+                }
+            }
+        }
     }
 
 
@@ -183,45 +205,57 @@ class RideServiceImpl @Inject constructor(
         customerId: String,
         driverId: Int?
     ): Result<RideHistoryResponse, RideHistoryError> {
-        // Construct the URL for the ride history request, including an optional driver ID query parameter.
-        val url = if (driverId == null) {
-            "${Constants.API_HISTORY_RIDE_ENDPOINT}${customerId}"
-        } else {
-            "${Constants.API_HISTORY_RIDE_ENDPOINT}${customerId}?driver_id=$driverId"
-        }
-        // Use a try-catch block to handle potential exceptions.
-        return try {
-            // Make a GET request to the constructed URL.
-            val response = httpClient.get(url) {
-                contentType(ContentType.Application.Json)
+
+       return when (activeNetworkError.checkNetwork()) {
+
+            false -> {
+                Result.Error(RideHistoryError.Network.NETWORK_ERROR)
             }
-            // Check if the response status code indicates success.
-            if (response.status.isSuccess()) {
-                // Deserialize the response body to a RideHistoryResponse object.
-                val historyResponse = response.body<RideHistoryResponse>()
-                // Return a Success result with the ride history.
-                Result.Success(
-                    RideHistoryResponse(
-                        customerId = historyResponse.customerId,
-                        rides = historyResponse.rides
-                    )
-                )
-            } else {
-                // If the response status code is not successful, map the error using the injected error mapper.
-                Result.Error(rideHistoryResponseError.mapError(response))
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Error fetching ride history: ${e.message}")
-            // In case of an exception, return an Error result with an UNKNOWN_ERROR,
-            // and then transform it into a Success result with an empty RideHistoryResponse using onErrorReturn.
-            Result.Error(RideHistoryError.Network.UNKNOWN_ERROR).onErrorReturn {
-                RideHistoryResponse(
-                    customerId = "",
-                    rides = emptyList()
-                )
+
+            true -> {
+                // Construct the URL for the ride history request, including an optional driver ID query parameter.
+                val url = if (driverId == null) {
+                    "${Constants.API_HISTORY_RIDE_ENDPOINT}${customerId}"
+                } else {
+                    "${Constants.API_HISTORY_RIDE_ENDPOINT}${customerId}?driver_id=$driverId"
+                }
+                // Use a try-catch block to handle potential exceptions.
+                return try {
+                    // Make a GET request to the constructed URL.
+                    val response = httpClient.get(url) {
+                        contentType(ContentType.Application.Json)
+                    }
+                    // Check if the response status code indicates success.
+                    if (response.status.isSuccess()) {
+                        // Deserialize the response body to a RideHistoryResponse object.
+                        val historyResponse = response.body<RideHistoryResponse>()
+                        // Return a Success result with the ride history.
+                        Result.Success(
+                            RideHistoryResponse(
+                                customerId = historyResponse.customerId,
+                                rides = historyResponse.rides
+                            )
+                        )
+                    } else {
+                        // If the response status code is not successful, map the error using the injected error mapper.
+                        Result.Error(rideHistoryResponseError.mapError(response))
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error fetching ride history: ${e.message}")
+                    // In case of an exception, return an Error result with an UNKNOWN_ERROR,
+                    // and then transform it into a Success result with an empty RideHistoryResponse using onErrorReturn.
+                    Result.Error(RideHistoryError.Network.UNKNOWN_ERROR).onErrorReturn {
+                        RideHistoryResponse(
+                            customerId = "",
+                            rides = emptyList()
+                        )
+                    }
+                }
             }
         }
     }
+
+
 }
 
 

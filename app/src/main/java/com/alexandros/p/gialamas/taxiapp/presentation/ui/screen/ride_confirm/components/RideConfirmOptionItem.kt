@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,13 +25,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alexandros.p.gialamas.taxiapp.R
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.action.RideConfirmAction
 
 @Composable
 fun RideConfirmOptionItem(
     modifier: Modifier = Modifier,
     rideOption: RideOption,
-    debounce: Boolean,
-    onRideOptionSelected: (RideOption) -> Unit,
+    isConfirmRideCallReady: Boolean,
+    onAction: (RideConfirmAction) -> Unit,
 ) {
 
     val textColor = Color.White
@@ -172,13 +174,26 @@ fun RideConfirmOptionItem(
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
+
+                if (!isConfirmRideCallReady) {
+                    CircularProgressIndicator(
+                        modifier = modifier
+                            .align(Alignment.Center),
+                        color = Color.LightGray,
+                    )
+                }
+
                 Button(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.LightGray,
                         contentColor = Color.DarkGray
                     ),
-                    onClick = { onRideOptionSelected(rideOption) },
-                    enabled = !debounce
+                    enabled = isConfirmRideCallReady,
+                    onClick = {
+                        onAction(RideConfirmAction.OptionSelected(rideOption))
+                        onAction(RideConfirmAction.ConfirmRide)
+                        onAction(RideConfirmAction.Debounce)
+                    },
                 ) {
                     Text(
                         stringResource(R.string.select_driver_button_label),

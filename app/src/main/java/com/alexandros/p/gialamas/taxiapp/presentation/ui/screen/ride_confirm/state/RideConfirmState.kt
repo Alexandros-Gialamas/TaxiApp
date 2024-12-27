@@ -1,4 +1,4 @@
-package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm
+package com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.state
 
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideOption
@@ -17,5 +17,6 @@ data class RideConfirmState(
     val duration: String = "",
     val options: List<RideOption> = emptyList(),
     val error: UiText? = null,
-    val restart: Boolean = false
+    val restart: Boolean = false,
+    val isConfirmRideCallReady: Boolean = true
 ) : ViewState

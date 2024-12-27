@@ -24,27 +24,26 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.RideHistoryState
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.action.RideHistoryAction
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Driver
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DriverSelector(
     modifier: Modifier = Modifier,
-    uiState: RideHistoryState,
     keyboardController: SoftwareKeyboardController? = null,
-    onExpandedChange: (Boolean) -> Unit,
-    onDismiss: (Boolean) -> Unit,
-    onDriverSelected: (Driver) -> Unit
+    driverName: String,
+    isDriverMenuExpanded: Boolean,
+    onAction: (RideHistoryAction) -> Unit
 ) {
 
     ExposedDropdownMenuBox(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .fillMaxWidth(0.9f),
-        expanded = uiState.isDriverMenuExpanded,
+        expanded = isDriverMenuExpanded,
         onExpandedChange = {
-            onExpandedChange(it)
+            onAction(RideHistoryAction.DriverSelectorOnExpandChange(it))
         },
     ) {
 
@@ -56,7 +55,7 @@ fun DriverSelector(
                     type = MenuAnchorType.PrimaryEditable,
                 ),
             readOnly = true,
-            value = uiState.driverName,
+            value = driverName,
             onValueChange = {},
             textStyle = TextStyle(
                 textAlign = TextAlign.Center,
@@ -64,7 +63,7 @@ fun DriverSelector(
             ),
             label = { Text("Select Driver") },
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = uiState.isDriverMenuExpanded)
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isDriverMenuExpanded)
             }
         )
         MaterialTheme(
@@ -79,8 +78,10 @@ fun DriverSelector(
                         ),
                     shape = RoundedCornerShape(16.dp),
                     containerColor = Color.DarkGray,
-                    expanded = uiState.isDriverMenuExpanded,
-                    onDismissRequest = { onDismiss(false) }
+                    expanded = isDriverMenuExpanded,
+                    onDismissRequest = {
+                        onAction(RideHistoryAction.DriverSelectorOnDismiss(false))
+                    }
                 ) {
                     Driver.entries.forEach { driver ->
                         DropdownMenuItem(
@@ -104,8 +105,8 @@ fun DriverSelector(
                                     )
                                 },
                             onClick = {
-                                onDriverSelected(driver)
-                                onDismiss(false)
+                                onAction(RideHistoryAction.DriverSelectorOnDriverSelected(driver))
+                                onAction(RideHistoryAction.DriverSelectorOnDismiss(false))
                                 keyboardController?.hide()
                             },
                             text = {

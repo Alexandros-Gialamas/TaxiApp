@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,36 +16,45 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alexandros.p.gialamas.taxiapp.R
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.RideHistoryState
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.action.RideHistoryAction
 
 @Composable
 fun RideHistoryButton(
     modifier: Modifier = Modifier,
     keyboardController: SoftwareKeyboardController?,
-    uiState: RideHistoryState,
-    cancelRequest: () -> Unit,
-    confirmRequest: () -> Unit
+    isRideHistoryCallReady: Boolean,
+    isNetworkLoading: Boolean,
+    onAction: (RideHistoryAction) -> Unit
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
+
+        if (!isRideHistoryCallReady) {
+            CircularProgressIndicator(
+                modifier = modifier
+                    .align(Alignment.Center),
+                color = Color.LightGray,
+            )
+        }
+
         Button(
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.LightGray,
                 contentColor = Color.DarkGray,
             ),
-            enabled = uiState.canRequestAgain,
+            enabled = isRideHistoryCallReady,
             onClick = {
                 keyboardController?.hide()
                 when {
-                    uiState.isNetworkLoading -> {
-                        cancelRequest()
+                    isNetworkLoading -> {
+                        onAction(RideHistoryAction.CancelRequest)
                     }
 
                     else -> {
-                        confirmRequest()
+                        onAction(RideHistoryAction.ConfirmRequest)
                     }
                 }
             }) {
@@ -53,7 +63,7 @@ fun RideHistoryButton(
                     .padding(8.dp),
                 text =
                 when {
-                    uiState.isNetworkLoading -> {
+                    isNetworkLoading -> {
                         stringResource(R.string.cancel_button_label)
                     }
 
