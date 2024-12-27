@@ -13,31 +13,37 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.RideEstimateState
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.action.RideEstimateAction
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.UiText
 
 @Composable
 fun DisplayEstimateErrorText(
-    uiState: RideEstimateState,
-    context: Context
+    errorUiTextMessage: UiText?,
+    context: Context,
+    onAction: (RideEstimateAction) -> Unit
 ) {
-    uiState.error?.let {
+
+    if (errorUiTextMessage != null) {
+        onAction(RideEstimateAction.DelayedErrorClearance)
+    }
+
+//    errorUiTextMessage?.let {
         Box(
             modifier = Modifier
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                text = errorUiTextMessage?.asString(context = context) ?: "",
+                softWrap = true,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                fontSize = 18.sp
+            )
         }
-        Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            text = uiState.error.asString(context),
-            softWrap = true,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            fontSize = 18.sp
-        )
-    }
+//    }
 }

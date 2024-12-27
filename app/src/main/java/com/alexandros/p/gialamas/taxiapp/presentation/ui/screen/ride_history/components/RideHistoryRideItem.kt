@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.Rides
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.state.Rides
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractDate
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.extractTime
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatDurationTimeToString

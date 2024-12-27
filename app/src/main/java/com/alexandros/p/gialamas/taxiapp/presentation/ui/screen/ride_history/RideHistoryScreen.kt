@@ -17,11 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -41,8 +36,9 @@ import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.com
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.components.DriverSelector
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.components.RideHistoryButton
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.components.RideHistoryRideItem
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.state.Rides
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.viewmodel.RideHistoryViewModel
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Customer
-import kotlinx.coroutines.delay
 import java.util.UUID
 
 @Composable
@@ -59,25 +55,6 @@ fun RideHistoryScreen(
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
-
-    var displayError by remember { mutableStateOf(false) }
-    var debounce by remember { mutableStateOf(false) }
-
-    LaunchedEffect(uiState.networkError, uiState.localError) {
-        if (uiState.networkError != null || uiState.localError != null) {
-            displayError = true
-            delay(3000L)
-            displayError = false
-        }
-    }
-
-    LaunchedEffect(debounce) {
-        if (debounce) {
-            viewModel.cancelApiRequest()
-            debounce = false
-        }
-    }
-
 
 
     TaxiAppScaffold { paddingValues ->
@@ -132,7 +109,7 @@ fun RideHistoryScreen(
                         Column(
                             modifier = modifier
                                 .fillMaxWidth(0.9f),
-                            verticalArrangement = Arrangement.spacedBy(30.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             AutoCompleteTextField(
@@ -140,86 +117,76 @@ fun RideHistoryScreen(
                                 keyboardController = keyboardController,
                                 onOptionSelected = {
                                     viewModel.updateCustomerId(it.customerId)
-                                    viewModel.updateIsCustomerIdValid(true)
+                                    viewModel.updateIsCustomerIdValid(isCustomerIdValid = true)
                                 },
                                 optionToString = { it.customerId },
                                 onValueChange = {
                                     viewModel.updateCustomerId(it)
-                                    viewModel.updateIsCustomerIdValid(true)
+                                    viewModel.updateIsCustomerIdValid(isCustomerIdValid = true)
                                 },
                                 onClearClicked = {
                                     viewModel.updateCustomerId(it)
-                                    viewModel.updateIsCustomerIdValid(false)
+                                    viewModel.updateIsCustomerIdValid(isCustomerIdValid = false)
                                 },
                                 label = stringResource(R.string.customer_id_label),
                                 text = uiState.customerId,
                                 isValid = uiState.isCustomerIdValid
                             )
 
+                            Spacer(modifier = modifier.height(8.dp))
+
                             DriverSelector(
-                                uiState = uiState,
                                 keyboardController = keyboardController,
-                                onExpandedChange = { viewModel.toggleDriverMenu(it) },
-                                onDismiss = { viewModel.toggleDriverMenu(it) },
-                                onDriverSelected = { driver ->
-                                    viewModel.updateDriver(
-                                        driverId = driver.driverId,
-                                        driverName = driver.driverName
-                                    )
-                                }
+                                driverName = uiState.driverName,
+                                isDriverMenuExpanded = uiState.isDriverMenuExpanded,
+                                onAction = { viewModel.handleAction(it) }
                             )
                         }
                     }
                 }
 
-                item { Spacer(modifier = modifier.height(8.dp)) }
+                item { Spacer(modifier = modifier.height(6.dp)) }
 
 
                 item {
                     RideHistoryButton(
-                        uiState = uiState,
+                        isNetworkLoading = uiState.isNetworkLoading,
+                        isRideHistoryCallReady = uiState.isRideHistoryCallReady,
                         keyboardController = keyboardController,
-                        cancelRequest = {
-                            debounce = true
-                        },
-                        confirmRequest = {
-                            viewModel.getRideHistory(
-                                customerId = uiState.customerId,
-                                driverId = uiState.driverId,
-                                context = context
-                            )
-                        }
+                        onAction = { viewModel.handleAction(it) }
                     )
                 }
 
-                item { Spacer(modifier = modifier.height(8.dp)) }
 
-
-                if (displayError) {
-                    item {
-                        DisplayHistoryErrorText(uiState = uiState, context = context)
+                item {
+                    Box(
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .align(Alignment.Center),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (uiState.isLocalLoading || uiState.isNetworkLoading) {
+                            CircularProgressIndicator(color = if (uiState.isLocalLoading) Color.Gray else Color.LightGray)
+                        }
+                        DisplayHistoryErrorText(
+                            localErrorUiTextMessage = uiState.localError,
+                            networkErrorUiTextMessage = uiState.networkError,
+                            context = context,
+                            onAction = { viewModel.handleAction(it) }
+                        )
                     }
                 }
 
                 item { Spacer(modifier = modifier.height(8.dp)) }
-
-                if (uiState.isLocalLoading || uiState.isNetworkLoading) {
-                    item {
-                        CircularProgressIndicator(color = if (uiState.isLocalLoading) Color.Gray else Color.LightGray)
-                    }
-                }
-
-                item { Spacer(modifier = modifier.height(8.dp)) }
-
 
                 items(
                     items = uiState.rides,
                     key = {
-                    when (it) {
-                        is Rides.Local -> it.rideEntity.id
-                        is Rides.Network -> UUID.randomUUID().toString()
+                        when (it) {
+                            is Rides.Local -> it.rideEntity.id
+                            is Rides.Network -> UUID.randomUUID().toString()
+                        }
                     }
-                }
                 ) { ride: Rides -> RideHistoryRideItem(ride) }
             }
         }

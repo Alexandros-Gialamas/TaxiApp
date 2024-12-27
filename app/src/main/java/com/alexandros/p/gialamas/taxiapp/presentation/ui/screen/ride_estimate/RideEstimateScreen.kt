@@ -18,11 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -42,12 +37,13 @@ import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.AutoCompleteTextField
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.common.TaxiAppScaffold
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.action.RideEstimateAction
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.components.DisplayEstimateErrorText
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.components.RideEstimateButton
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_estimate.viewmodel.RideEstimateViewModel
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Customer
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Destination
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Origin
-import kotlinx.coroutines.delay
 
 @Composable
 fun RideEstimateScreen(
@@ -70,23 +66,6 @@ fun RideEstimateScreen(
     }
 
 
-    var displayError by remember { mutableStateOf(false) }
-    var debounce by remember { mutableStateOf(false) }
-
-    LaunchedEffect(uiState.error) {
-        if (uiState.error != null) {
-            displayError = true
-            delay(5000L)
-            displayError = false
-        }
-    }
-
-    LaunchedEffect(debounce) {
-        if (debounce) {
-            viewModel.cancelApiRequest()
-            debounce = false
-        }
-    }
 
     TaxiAppScaffold(
         modifier = modifier
@@ -190,16 +169,16 @@ fun RideEstimateScreen(
                                     keyboardController = keyboardController,
                                     onOptionSelected = { selectedCustomer ->
                                         viewModel.updateCustomerId(selectedCustomer.customerId)
-                                        viewModel.updateIsCustomerIdValid(true)
+                                        viewModel.updateIsCustomerIdValid(isCustomerIdValid = true)
                                     },
                                     optionToString = { it.customerId },
                                     onValueChange = { newValue ->
                                         viewModel.updateCustomerId(newValue)
-                                        viewModel.updateIsCustomerIdValid(true)
+                                        viewModel.updateIsCustomerIdValid(isCustomerIdValid = true)
                                     },
                                     onClearClicked = { newValue ->
                                         viewModel.updateCustomerId(newValue)
-                                        viewModel.updateIsCustomerIdValid(false)
+                                        viewModel.updateIsCustomerIdValid(isCustomerIdValid = false)
                                     },
                                     label = stringResource(R.string.customer_id_label),
                                     text = uiState.customerId,
@@ -211,16 +190,16 @@ fun RideEstimateScreen(
                                     keyboardController = keyboardController,
                                     onOptionSelected = { selectedOrigin ->
                                         viewModel.updateOrigin(selectedOrigin.origin)
-                                        viewModel.updateIsOriginValid(true)
+                                        viewModel.updateIsOriginValid(isOriginValid = true)
                                     },
                                     optionToString = { it.origin },
                                     onValueChange = { newValue ->
                                         viewModel.updateOrigin(newValue)
-                                        viewModel.updateIsOriginValid(true)
+                                        viewModel.updateIsOriginValid(isOriginValid = true)
                                     },
                                     onClearClicked = { newValue ->
                                         viewModel.updateOrigin(newValue)
-                                        viewModel.updateIsOriginValid(false)
+                                        viewModel.updateIsOriginValid(isOriginValid = false)
                                     },
                                     label = stringResource(R.string.origin_label),
                                     text = uiState.origin,
@@ -232,16 +211,16 @@ fun RideEstimateScreen(
                                     keyboardController = keyboardController,
                                     onOptionSelected = { selectedDestination ->
                                         viewModel.updateDestination(selectedDestination.destination)
-                                        viewModel.updateIsDestinationValid(true)
+                                        viewModel.updateIsDestinationValid(isDestinationValid = true)
                                     },
                                     optionToString = { it.destination },
                                     onValueChange = { newValue ->
                                         viewModel.updateDestination(newValue)
-                                        viewModel.updateIsDestinationValid(true)
+                                        viewModel.updateIsDestinationValid(isDestinationValid = true)
                                     },
                                     onClearClicked = { newValue ->
                                         viewModel.updateDestination(newValue)
-                                        viewModel.updateIsDestinationValid(false)
+                                        viewModel.updateIsDestinationValid(isDestinationValid = false)
                                     },
                                     label = stringResource(R.string.destination_label),
                                     text = uiState.destination,
@@ -257,35 +236,36 @@ fun RideEstimateScreen(
 
                 item {
                     RideEstimateButton(
-                        uiState = uiState,
+                        isStateLoading = uiState.isLoading,
+                        isRideEstimateCallReady = uiState.isRideEstimateCallReady,
                         keyboardController = keyboardController,
-                        cancelRequest = { debounce = true },
-                        confirmRequest = {
-                            viewModel.getRideEstimate(
-                                customerId = uiState.customerId,
-                                origin = uiState.origin,
-                                destination = uiState.destination,
-                                context = context
-                            )
+                        onAction = {
+                            viewModel.handleAction(it)
                         }
                     )
                 }
 
-
-                if (displayError) {
+//                if (uiState.error != null) {
                     item {
-                        DisplayEstimateErrorText(uiState = uiState, context = context)
+                        DisplayEstimateErrorText(
+                            errorUiTextMessage = uiState.error,
+                            context = context,
+                            onAction = { viewModel.handleAction(it) }
+                        )
                     }
-                }
-
+//                }
 
                 uiState.rideEstimate.let { result ->
 
                     when (result) {
                         is Result.Error -> {
-                            if (displayError) {
+                            if (uiState.error != null) {
                                 item {
-                                    DisplayEstimateErrorText(uiState = uiState, context = context)
+                                    DisplayEstimateErrorText(
+                                        errorUiTextMessage = uiState.error,
+                                        context = context,
+                                        onAction = { viewModel.handleAction(it) }
+                                    )
                                 }
                             }
                         }
@@ -297,7 +277,7 @@ fun RideEstimateScreen(
                                 uiState.origin,
                                 uiState.destination
                             )
-                            viewModel.updateLoadingState(false)
+                            RideEstimateAction.LoadingStateToFalse
                         }
 
                         Result.Idle -> Result.Idle

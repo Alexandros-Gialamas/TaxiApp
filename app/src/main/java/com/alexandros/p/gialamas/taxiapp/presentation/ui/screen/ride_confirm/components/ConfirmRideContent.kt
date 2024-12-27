@@ -21,7 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.alexandros.p.gialamas.taxiapp.R
 import com.alexandros.p.gialamas.taxiapp.domain.model.RideEstimate
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.RideConfirmState
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_confirm.state.RideConfirmState
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatDistance
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.format_values.formatDurationToReadableString
 

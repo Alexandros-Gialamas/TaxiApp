@@ -15,13 +15,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.RideHistoryState
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.action.RideHistoryAction
+import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.UiText
 
 @Composable
 fun DisplayHistoryErrorText(
-    uiState: RideHistoryState,
-    context: Context
+    localErrorUiTextMessage: UiText?,
+    networkErrorUiTextMessage: UiText?,
+    context: Context,
+    onAction: (RideHistoryAction) -> Unit
 ) {
+
+    if (localErrorUiTextMessage != null) {
+        onAction(RideHistoryAction.DelayedErrorClearance)
+    }
+    if (networkErrorUiTextMessage != null) {
+        onAction(RideHistoryAction.DelayedErrorClearance)
+    }
+
+
     Box(
         modifier = Modifier
             .fillMaxWidth(),
@@ -34,32 +46,32 @@ fun DisplayHistoryErrorText(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            uiState.localError?.let {
+//            localErrorUiTextMessage?.let {
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    text = uiState.localError.asString(context),
+                    text = localErrorUiTextMessage?.asString(context) ?: "",
                     softWrap = true,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     fontSize = 18.sp
                 )
-            }
-            uiState.networkError?.let {
+//            }
+//            networkErrorUiTextMessage?.let {
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    text = uiState.networkError.asString(context),
+                    text = networkErrorUiTextMessage?.asString(context) ?: "",
                     softWrap = true,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                     fontSize = 18.sp
                 )
-            }
+//            }
         }
     }
 }
