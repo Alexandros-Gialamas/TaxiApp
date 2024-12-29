@@ -1,5 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.domain.error
 
+import com.alexandros.p.gialamas.taxiapp.data.model.ErrorResponseResult
+
 /**
  * Represents errors that can occur when fetching or handling the user's ride history.
  *
@@ -21,36 +23,37 @@ sealed interface RideHistoryError : ResultError {
     /**
      * Network-related errors that can occur when fetching ride history.
      */
-    enum class Network : RideHistoryError {
+    sealed class Network : RideHistoryError {
         /**
          * A general network error occurred (e.g., no internet connection, timeout).
          */
-        NETWORK_ERROR,
+        data class NetworkError(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * The server returned data in an unexpected or invalid format.
          */
-        INVALID_DATA,
+        data class InvalidData(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * The specified driver was not found in the system.
          */
-        DRIVER_NOT_FOUND,
+        data class DriverNotFound(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * The calculated distance for a ride in the history is invalid.
          */
-        INVALID_DISTANCE,
+        data class InvalidDistance(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * No rides were found for the given user.
          */
-        NO_RIDES_FOUND,
+        data class NoRidesFound(val error: ErrorResponseResult? = null) : Network()
+
 
         /**
          * An unknown error occurred on the server side.
          */
-        UNKNOWN_ERROR
+        data class UnknownError(val error: ErrorResponseResult? = null) : Network()
     }
 
     /**

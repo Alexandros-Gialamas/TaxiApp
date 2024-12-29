@@ -5,7 +5,6 @@ import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideConfirmationResult
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
-import com.alexandros.p.gialamas.taxiapp.data.model.RideHistoryResponse
 import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.RideConfirmResponseError
 import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_confirm.ValidateRideConfirmDriverDistance
 import com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_estimate.RideEstimateResponseError
@@ -17,10 +16,7 @@ import com.alexandros.p.gialamas.taxiapp.domain.error.Result
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideConfirmError
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import com.alexandros.p.gialamas.taxiapp.domain.model.Driver
-import com.alexandros.p.gialamas.taxiapp.domain.model.Ride
-import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.error_presentation.asEstimateUiText
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -29,11 +25,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
-import junit.framework.Assert.fail
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyString
@@ -183,7 +177,7 @@ class RideServiceImplTest {
 
         when (response) {
             is Result.Error -> {
-                assertEquals(RideConfirmError.NetWork.INVALID_DISTANCE, response.error)
+                assertEquals(RideConfirmError.NetWork.InvalidDistance, response.error)
             }
             is Result.Success -> {
                 assertEquals(true, response.data)

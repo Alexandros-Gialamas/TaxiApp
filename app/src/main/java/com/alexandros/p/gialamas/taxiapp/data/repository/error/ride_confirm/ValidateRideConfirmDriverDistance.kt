@@ -28,7 +28,7 @@ class ValidateRideConfirmDriverDistance @Inject constructor() {
         val isDriverKmAcceptable = driver.minKm < rideRequest.distance
 
        return if (isDriverKmAcceptable) Result.Success(RideConfirmationResult(true))
-        else Result.Error(RideConfirmError.NetWork.INVALID_DISTANCE)
+        else Result.Error(RideConfirmError.NetWork.InvalidDistance())
 
         }
     }

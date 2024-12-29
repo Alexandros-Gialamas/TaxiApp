@@ -1,5 +1,6 @@
 package com.alexandros.p.gialamas.taxiapp.domain.error
 
+import com.alexandros.p.gialamas.taxiapp.data.model.ErrorResponseResult
 
 
 /**
@@ -13,31 +14,31 @@ sealed interface RideConfirmError : ResultError {
     /**
      * Network-related errors that can occur during ride confirmation.
      */
-    enum class NetWork : RideConfirmError {
+    sealed class NetWork : RideConfirmError {
         /**
          * The server returned data in an unexpected or invalid format.
          */
-        INVALID_DATA,
+        data class InvalidData(val error: ErrorResponseResult? = null) : NetWork()
 
         /**
          * The calculated distance for the ride is invalid or unreasonable.
          */
-        INVALID_DISTANCE,
+        data class InvalidDistance(val error: ErrorResponseResult? = null) : NetWork()
 
         /**
          * The ride was not confirmed by the server.
          */
-        RIDE_NOT_CONFIRMED,
+        data class RideNotConfirmed(val error: ErrorResponseResult? = null) : NetWork()
 
         /**
          * A general network error occurred (e.g., no internet connection, timeout).
          */
-        NETWORK_ERROR,
+        data class NetworkError(val error: ErrorResponseResult? = null) : NetWork()
 
         /**
          * An unknown error occurred on the server side.
          */
-        UNKNOWN_ERROR
+        data class UnknownError(val error: ErrorResponseResult? = null) : NetWork()
     }
 
     /**

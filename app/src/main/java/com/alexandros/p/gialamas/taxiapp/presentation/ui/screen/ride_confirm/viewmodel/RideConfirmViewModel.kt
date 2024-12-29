@@ -202,7 +202,7 @@ class RideConfirmViewModel @Inject constructor(
                 } catch (e: Exception) {
                     updateState {
                         it.copy(
-                            error = RideConfirmError.NetWork.UNKNOWN_ERROR.asConfirmUiText(),
+                            error = RideConfirmError.NetWork.UnknownError().asConfirmUiText(),
                             isRideConfirmed = false,
                             isLoading = false
                         )

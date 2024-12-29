@@ -1,25 +1,35 @@
 package com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_history
 
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.utils.ParseErrorResponse
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideHistoryError
 import io.ktor.client.statement.HttpResponse
 import javax.inject.Inject
 
-class RideHistoryResponseError @Inject constructor(){
+class RideHistoryResponseError @Inject constructor(
+    private val parseErrorResponse: ParseErrorResponse
+) {
 
-    fun mapError(response: HttpResponse) : RideHistoryError {
+     suspend fun mapError(response: HttpResponse): RideHistoryError {
         return when (response.status.value) {
             400 -> {
-                RideHistoryError.Network.DRIVER_NOT_FOUND
+                val errorResponse = parseErrorResponse.parse(response)
+                RideHistoryError.Network.DriverNotFound(errorResponse)
             }
+
             404 -> {
-                RideHistoryError.Network.INVALID_DATA
+                val errorResponse = parseErrorResponse.parse(response)
+                RideHistoryError.Network.NoRidesFound(errorResponse)
             }
+
             406 -> {
-                RideHistoryError.Network.INVALID_DISTANCE
+                val errorResponse = parseErrorResponse.parse(response)
+                RideHistoryError.Network.InvalidDistance(errorResponse)
             }
+
             else -> {
-                RideHistoryError.Network.UNKNOWN_ERROR
+                RideHistoryError.Network.UnknownError()
             }
         }
     }
 }
+
