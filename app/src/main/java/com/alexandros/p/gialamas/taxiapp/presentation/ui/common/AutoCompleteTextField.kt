@@ -161,10 +161,10 @@ fun <T : Enum<T>> AutoCompleteTextField(
                                         }
                                         .align(Alignment.CenterHorizontally),
                                     onClick = {
-                                        optionToString(option)
-                                        suggestionsVisible = false
-                                        onOptionSelected(option)
                                         keyboardController?.hide()
+                                        suggestionsVisible = false
+                                        optionToString(option)
+                                        onOptionSelected(option)
                                     },
                                     text = {
                                         Text(
