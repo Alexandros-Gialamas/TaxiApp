@@ -3,9 +3,9 @@
 
 <div align="center">
 
-| Demo                                                                 | Description                                                                      |
-| :------------------------------------------------------------------- | :---------------------------------------------------------------------------------
-| <img src="app/AppDemo/taxi_app.gif" width="107" alt="App Demo">      | This is a native Android application developed as part of a technical test for a ride-hailing service. It allows users to request a ride, choose betweendifferent ride options, and view their ride history.                                      
+| Demo                                | Description                        | ScreenShot                         |
+| :---------------------------------- | :----------------------------------| :----------------------------------
+| <img src="app/AppDemo/app_demo.gif" width="133" alt="App Demo">      | This is a native Android application developed as part of a technical test for a ride-hailing service. It allows users to request a ride, choose betweendifferent ride options, and view their ride history. | <img src="app/AppDemo/taxi_app.jpg" width="200" alt="App Demo">                                      
 
 </div>
 
