@@ -11,7 +11,7 @@ class ValidateRideEstimateResponse @Inject constructor() {
         rideRequest: RideEstimateResponse,
     ): Result<Boolean, RideEstimateError> {
 
-        if (rideRequest.distance <= 0.0) return Result.Error(RideEstimateError.Network.INVALID_LOCATION)
+        if (rideRequest.distance <= 0.0) return Result.Error(RideEstimateError.Network.InvalidLocation())
 
          return Result.Success(true)
     }

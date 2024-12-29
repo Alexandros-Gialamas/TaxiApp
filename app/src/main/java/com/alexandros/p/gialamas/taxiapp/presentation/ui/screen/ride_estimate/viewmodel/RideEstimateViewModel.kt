@@ -216,7 +216,7 @@ class RideEstimateViewModel @Inject constructor(
                                     updateState {
                                         it.copy(
                                             rideEstimate = Result.Success(rideEstimate.data.toRideEstimate()),
-                                            // Do not update loading to false here because of glitch
+                                            // Do not update loading to false here because of UI glitch
                                         )
                                     }
                                 }
@@ -228,7 +228,7 @@ class RideEstimateViewModel @Inject constructor(
                             // Handle any exceptions during the API request.
                             updateState {
                                 it.copy(
-                                    rideEstimate = Result.Error(RideEstimateError.Network.UNKNOWN_ERROR),
+                                    rideEstimate = Result.Error(RideEstimateError.Network.UnknownError()),
                                     isLoading = false
                                 )
                             }

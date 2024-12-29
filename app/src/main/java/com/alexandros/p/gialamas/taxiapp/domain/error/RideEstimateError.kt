@@ -1,5 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.domain.error
 
+import com.alexandros.p.gialamas.taxiapp.data.model.ErrorResponseResult
+
 /**
  * Represents errors that can occur during the ride estimation process.
  *
@@ -31,35 +33,35 @@ sealed interface RideEstimateError : ResultError {
     /**
      * Network-related errors that can occur during ride estimation.
      */
-    enum class Network : RideEstimateError {
+    sealed class Network : RideEstimateError {
         /**
          * A general network error occurred (e.g., no internet connection, timeout).
          */
-        NETWORK_ERROR,
+        data class NetworkError(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * The server returned data in an unexpected or invalid format.
          */
-        INVALID_DATA,
+        data class InvalidData(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * The provided location (origin or destination) is invalid according to the server.
          */
-        INVALID_LOCATION,
+        data class InvalidLocation(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * The customer ID provided is invalid according to the server.
          */
-        INVALID_CUSTOMER_ID,
+        data class InvalidCustomerId(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * No available rides were found for the given criteria.
          */
-        NO_RIDES_FOUND,
+        data class NoRidesFound(val error: ErrorResponseResult? = null) : Network()
 
         /**
          * An unknown error occurred on the server side.
          */
-        UNKNOWN_ERROR
+        data class UnknownError(val error: ErrorResponseResult? = null) : Network()
     }
 }

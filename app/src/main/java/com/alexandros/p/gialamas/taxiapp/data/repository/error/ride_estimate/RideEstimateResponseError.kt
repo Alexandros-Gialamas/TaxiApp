@@ -1,18 +1,23 @@
 package com.alexandros.p.gialamas.taxiapp.data.repository.error.ride_estimate
 
+import com.alexandros.p.gialamas.taxiapp.data.repository.error.utils.ParseErrorResponse
 import com.alexandros.p.gialamas.taxiapp.domain.error.RideEstimateError
 import io.ktor.client.statement.HttpResponse
 import javax.inject.Inject
 
-class RideEstimateResponseError @Inject constructor() {
+class RideEstimateResponseError @Inject constructor(
+    private val parseErrorResponse: ParseErrorResponse
+) {
 
-    fun mapError(response: HttpResponse) : RideEstimateError {
+    suspend fun mapError(response: HttpResponse) : RideEstimateError {
         return when (response.status.value) {
             400 -> {
-                RideEstimateError.Network.INVALID_DATA
+                val errorResponse = parseErrorResponse.parse(response)
+                RideEstimateError.Network.InvalidData(errorResponse)
             }
             else -> {
-                RideEstimateError.Network.UNKNOWN_ERROR
+                val errorResponse = parseErrorResponse.parse(response)
+                RideEstimateError.Network.UnknownError(errorResponse)
             }
         }
     }

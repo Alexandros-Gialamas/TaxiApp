@@ -43,35 +43,45 @@ fun DisplayHistoryErrorText(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-//            localErrorUiTextMessage?.let {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    text = localErrorUiTextMessage?.asString(context) ?: "",
-                    softWrap = true,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    fontSize = 18.sp
-                )
-//            }
-//            networkErrorUiTextMessage?.let {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    text = networkErrorUiTextMessage?.asString(context) ?: "",
-                    softWrap = true,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    fontSize = 18.sp
-                )
-//            }
+
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                text = if (localErrorUiTextMessage?.asString(context).isNullOrBlank()) ""
+                else
+                    buildString {
+                    append("LOCAL DATABASE ERROR")
+                    appendLine()
+                    append(localErrorUiTextMessage?.asString(context))
+                },
+                softWrap = true,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                fontSize = 18.sp
+            )
+
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                text = if (networkErrorUiTextMessage?.asString(context).isNullOrBlank()) ""
+                else
+                buildString {
+                    append("NETWORK ERROR")
+                    appendLine()
+                    append(networkErrorUiTextMessage?.asString(context))
+                },
+                softWrap = true,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                fontSize = 18.sp
+            )
         }
     }
 }

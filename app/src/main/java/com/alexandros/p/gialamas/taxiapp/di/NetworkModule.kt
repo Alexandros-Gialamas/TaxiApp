@@ -8,6 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
+import kotlinx.serialization.json.Json
 import javax.inject.Singleton
 
 @Module
@@ -18,6 +19,12 @@ object NetworkModule {
     @Singleton
     fun provideRideService(rideServiceImpl: RideServiceImpl): RideService {
         return rideServiceImpl
+    }
+
+    @Provides
+    @Singleton
+    fun provideJson(): Json{
+        return Json
     }
 
     @Provides

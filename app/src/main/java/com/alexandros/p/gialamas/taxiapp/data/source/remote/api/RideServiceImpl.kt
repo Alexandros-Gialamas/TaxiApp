@@ -1,6 +1,7 @@
 package com.alexandros.p.gialamas.taxiapp.data.source.remote.api
 
 import com.alexandros.p.gialamas.taxiapp.data.model.ConfirmRideRequest
+import com.alexandros.p.gialamas.taxiapp.data.model.ErrorResponseResult
 import com.alexandros.p.gialamas.taxiapp.data.model.RideConfirmationResult
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateRequest
 import com.alexandros.p.gialamas.taxiapp.data.model.RideEstimateResponse
@@ -70,7 +71,7 @@ class RideServiceImpl @Inject constructor(
        return when (activeNetworkError.checkNetwork()) {
 
             false -> {
-                Result.Error(RideEstimateError.Network.NETWORK_ERROR)
+                Result.Error(RideEstimateError.Network.NetworkError())
             }
 
             true -> {
@@ -98,7 +99,7 @@ class RideServiceImpl @Inject constructor(
                         // Validate the received RideEstimateResponse using the injected validator.
                         when (validateRideEstimateResponse.validation(estimateResponse)) {
                             // If validation fails, map it to an INVALID_LOCATION error.
-                            is Result.Error -> Result.Error(RideEstimateError.Network.INVALID_LOCATION)
+                            is Result.Error -> Result.Error(RideEstimateError.Network.InvalidLocation())
                             // If validation succeeds, return a Success result with the validated data.
                             is Result.Success -> {
                                 Result.Success(
@@ -123,7 +124,7 @@ class RideServiceImpl @Inject constructor(
                     }
                 } catch (e: Exception) {
                     Timber.e(e, "Error fetching ride estimate: ${e.message}")
-                    Result.Error(RideEstimateError.Network.UNKNOWN_ERROR)
+                    Result.Error(RideEstimateError.Network.UnknownError())
                 }
             }
         }
@@ -143,7 +144,7 @@ class RideServiceImpl @Inject constructor(
         return when (activeNetworkError.checkNetwork()) {
 
             false -> {
-                Result.Error(RideConfirmError.NetWork.NETWORK_ERROR)
+                Result.Error(RideConfirmError.NetWork.NetworkError())
             }
 
             true -> {
@@ -187,7 +188,7 @@ class RideServiceImpl @Inject constructor(
 
                 } catch (e: Exception) {
                     Timber.e(e, "Error confirming the ride : ${e.message}")
-                    return Result.Error(RideConfirmError.NetWork.UNKNOWN_ERROR)
+                    return Result.Error(RideConfirmError.NetWork.UnknownError())
                 }
             }
         }
@@ -209,7 +210,7 @@ class RideServiceImpl @Inject constructor(
        return when (activeNetworkError.checkNetwork()) {
 
             false -> {
-                Result.Error(RideHistoryError.Network.NETWORK_ERROR)
+                Result.Error(RideHistoryError.Network.NetworkError())
             }
 
             true -> {
@@ -244,7 +245,7 @@ class RideServiceImpl @Inject constructor(
                     Timber.e(e, "Error fetching ride history: ${e.message}")
                     // In case of an exception, return an Error result with an UNKNOWN_ERROR,
                     // and then transform it into a Success result with an empty RideHistoryResponse using onErrorReturn.
-                    Result.Error(RideHistoryError.Network.UNKNOWN_ERROR).onErrorReturn {
+                    Result.Error(RideHistoryError.Network.UnknownError()).onErrorReturn {
                         RideHistoryResponse(
                             customerId = "",
                             rides = emptyList()

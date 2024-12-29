@@ -209,7 +209,7 @@ class RideHistoryViewModel @Inject constructor(
                                     if (historyRides.isEmpty()) {
                                         updateState { currentState ->
                                             currentState.copy(
-                                                networkError = RideHistoryError.Network.NO_RIDES_FOUND.asHistoryUiText(),
+                                                networkError = RideHistoryError.Network.NoRidesFound().asHistoryUiText(),
                                                 isNetworkLoading = false
                                             )
                                         }
@@ -272,7 +272,7 @@ class RideHistoryViewModel @Inject constructor(
                         } catch (e: Exception) {
                             updateState {
                                 it.copy(
-                                    rideHistory = Result.Error(RideHistoryError.Network.UNKNOWN_ERROR),
+                                    rideHistory = Result.Error(RideHistoryError.Network.UnknownError()),
                                     isNetworkLoading = false
                                 )
                             }

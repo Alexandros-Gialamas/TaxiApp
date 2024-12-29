@@ -55,17 +55,12 @@ fun RideHistoryRideItem(ride: Rides) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    if (ride is Rides.Local) {
                         Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            text = "Customer ID: ${ride.rideEntity.customerId}",
+                            text = if (ride is Rides.Local) "Database" else "Network",
                             fontWeight = FontWeight.Bold,
-                            color = textColor,
-                            textAlign = TextAlign.Center
+                            color = if (ride is Rides.Local) Color.Green else Color.Yellow,
+                            textAlign = TextAlign.Start,
                         )
-                    }
 
                     Text(
                         modifier = Modifier
@@ -79,7 +74,7 @@ fun RideHistoryRideItem(ride: Rides) {
                         }",
                         fontWeight = FontWeight.Bold,
                         color = textColor,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.End
                     )
                 }
             }
