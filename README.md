@@ -275,7 +275,7 @@ The application must have the following screens and behaviors:
        
     *   distance. 
        
-    *   weather. 
+    *   duration. 
        
     *   value.
 
