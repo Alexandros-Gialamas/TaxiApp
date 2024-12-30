@@ -17,20 +17,20 @@
   <summary> Assignment documentation in English -> Click to expand</summary>
   <p>
 
-Technical Test - Mobile
+## Technical Test - Mobile
 Hello, candidate!
 
 First, we would like to thank you for your interest in joining the Shopper.com.br development team.  We are building the best supply system in Brazil and for that we are looking for people passionate about using technology to create innovative solutions.  We hope it's you!   
 
 Explaining a little bit of the selection process:
 
-Stage 1 - Technical Test
+## Stage 1 - Technical Test
 In this first phase, you will build the frontend of an application for private transport.  It will be a simple and functional application that will integrate with 3 three endpoints of a simulated API.    
 
-Stage 2 - Technical Presentation
+## Stage 2 - Technical Presentation
 The best deliveries will be invited to present and participate in a more in-depth discussion about the project with the Shopper technical team.    
 
-Stage 3 - Cultural Fit
+## Stage 3 - Cultural Fit
 Once your technical skills have been validated, we now want to get to know you better as a person and professional.  In this next step, you will have the opportunity to talk with our team, share your career goals and better understand our culture and way of working.  It will be an open space to exchange ideas and clarify any questions you may have about us.  In addition, we have prepared a relaxed chat so that we can get to know your values, your motivations and how you fit into our team.  We want to make sure that this opportunity is ideal for you, as much as you are for us.    
 
 ## STAGE 1 - Technical test
@@ -403,4 +403,4 @@ The app includes robust error handling to address various scenarios, such as:
 ## Conclusion
 
 This project demonstrates the core concept of a well-structured, maintainable, scalable, and functional Android application using modern technologies, 
-clean code, clean architecture, MVI and best practices.
+clean code, Clean Architecture, MVI and best practices.
