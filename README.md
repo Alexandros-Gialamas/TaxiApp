@@ -9,7 +9,11 @@
 
 </div>
 
-<details>
+<div  align="center">
+[Technical Test PDF](app/AppDemo/Teste Técnico Mobile Novembro 2024 - App de taxi.pdf)
+  </div>
+
+  <details>
   <summary> Assignment documentation in English -> Click to expand</summary>
   <p>
 
