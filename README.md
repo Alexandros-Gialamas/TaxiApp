@@ -9,9 +9,9 @@
 
 </div>
 
-<div  align="center">
-[Technical Test PDF](app/AppDemo/Teste_Técnico_Mobile_Novembro_2024_App_de_taxi.pdf)
-  </div>
+
+[Technical Test PDF]("app/AppDemo/Teste_Técnico_Mobile_Novembro_2024_App_de_taxi.pdf")
+  -
 
   <details>
   <summary> Assignment documentation in English -> Click to expand</summary>
