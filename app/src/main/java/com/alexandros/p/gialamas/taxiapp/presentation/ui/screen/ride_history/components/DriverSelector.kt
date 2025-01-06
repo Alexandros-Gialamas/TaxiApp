@@ -14,6 +14,11 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -26,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.screen.ride_history.action.RideHistoryAction
 import com.alexandros.p.gialamas.taxiapp.presentation.ui.util.static_options.Driver
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +42,16 @@ fun DriverSelector(
     isDriverMenuExpanded: Boolean,
     onAction: (RideHistoryAction) -> Unit
 ) {
+
+    var closeKeyboard by remember { mutableStateOf(false) }
+
+    LaunchedEffect(closeKeyboard) {
+        if (closeKeyboard){
+            delay(100)
+            keyboardController?.hide()
+        }
+        closeKeyboard = false
+    }
 
     ExposedDropdownMenuBox(
         modifier = modifier
@@ -107,7 +123,7 @@ fun DriverSelector(
                             onClick = {
                                 onAction(RideHistoryAction.DriverSelectorOnDriverSelected(driver))
                                 onAction(RideHistoryAction.DriverSelectorOnDismiss(false))
-                                keyboardController?.hide()
+                                closeKeyboard = true
                             },
                             text = {
                                 Text(
