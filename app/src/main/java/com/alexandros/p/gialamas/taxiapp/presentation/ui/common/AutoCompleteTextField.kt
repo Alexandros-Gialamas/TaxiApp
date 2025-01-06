@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,11 +34,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,8 +58,17 @@ fun <T : Enum<T>> AutoCompleteTextField(
 ) {
 
     var suggestionsVisible by remember { mutableStateOf(false) }
+    var closeKeyboard by remember { mutableStateOf(false) }
     val filteredOptions =
         remember(text) { options.filter { optionToString(it).contains(text, ignoreCase = true) } }
+
+    LaunchedEffect(closeKeyboard) {
+        if (closeKeyboard){
+            delay(100)
+            keyboardController?.hide()
+        }
+        closeKeyboard = false
+    }
 
     Column(
         modifier = modifier
@@ -161,10 +173,10 @@ fun <T : Enum<T>> AutoCompleteTextField(
                                         }
                                         .align(Alignment.CenterHorizontally),
                                     onClick = {
-                                        keyboardController?.hide()
                                         suggestionsVisible = false
                                         optionToString(option)
                                         onOptionSelected(option)
+                                        closeKeyboard = true
                                     },
                                     text = {
                                         Text(
