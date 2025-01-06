@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -81,21 +83,6 @@ fun RideConfirmScreen(
             ), 11f
         )
     }
-    var alpha by remember { mutableFloatStateOf(1f) }
-
-    alpha = if (uiState.isLoading) {
-        animateFloatAsState(
-            targetValue = 0.1f,
-            animationSpec = tween(durationMillis = 300),
-            label = "on"
-        ).value
-    } else {
-        animateFloatAsState(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 300),
-            label = "off"
-        ).value
-    }
 
     LaunchedEffect(Unit) {
         viewModel.handleAction(
@@ -129,9 +116,7 @@ fun RideConfirmScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(
-                    if (uiState.isLoading) Color.Gray else Color.DarkGray
-                ),
+                .background(Color.DarkGray),
             contentAlignment = Alignment.Center
         ) {
 
@@ -144,107 +129,126 @@ fun RideConfirmScreen(
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.Center
             )
-
+            val animatedProgress by animateFloatAsState(
+                targetValue = uiState.confirmRideProgress,
+                animationSpec = tween(durationMillis = 7000),
+                label = "Ride confirm progress bar"
+            )
 
             if (uiState.isLoading) {
-                CircularProgressIndicator(
+
+                Column(
                     modifier = modifier
-                        .padding(top = 50.dp)
-                        .size(80.dp)
-                        .align(Alignment.Center)
-                        .zIndex(1f),
-                    strokeWidth = 10.dp,
-                    color = Color.DarkGray
-                )
-            }
+                        .fillMaxSize(0.8f),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        modifier = modifier.padding(16.dp),
+                        text = "Confirming Ride...",
+                        color = Color.LightGray,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                    )
 
-
-            LazyColumn(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .alpha(alpha),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-
-                item {
-                    GoogleMap(
+                    LinearProgressIndicator(
+                        progress = { animatedProgress },
                         modifier = modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 350.dp, max = 350.dp),
-                        cameraPositionState = cameraPositionState,
-                        uiSettings = MapUiSettings(
-                            scrollGesturesEnabled = true,
-                            zoomControlsEnabled = true,
-                            zoomGesturesEnabled = true,
-                            mapToolbarEnabled = true,
-                            rotationGesturesEnabled = true,
-                            scrollGesturesEnabledDuringRotateOrZoom = true,
-                            compassEnabled = true
-                        )
+                            .padding(16.dp)
+                            .fillMaxWidth(0.8f)
+                            .height(16.dp),
+                        color = Color.LightGray,
+                        trackColor = Color.Gray,
 
-                    ) {
-                        Marker(
-                            state = MarkerState(
-                                position = LatLng(
-                                    result.origin.latitude,
-                                    result.origin.longitude
-                                )
-                            ),
-                            title = uiState.origin,
-                        )
-                        Marker(
-                            state = MarkerState(
-                                position = LatLng(
-                                    result.destination.latitude,
-                                    result.destination.longitude
-                                )
-                            ),
-                            title = uiState.destination
-                        )
-                    }
-                }
-
-                item { Spacer(modifier = modifier.height(16.dp)) }
-
-                item {
-                    ConfirmRideContent(
-                        rideEstimate = result,
-                        uiState = uiState
                     )
                 }
+            } else {
 
+                LazyColumn(
+                    modifier = modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
 
-                item {
+                    item {
+                        GoogleMap(
+                            modifier = modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 350.dp, max = 350.dp),
+                            cameraPositionState = cameraPositionState,
+                            uiSettings = MapUiSettings(
+                                scrollGesturesEnabled = true,
+                                zoomControlsEnabled = true,
+                                zoomGesturesEnabled = true,
+                                mapToolbarEnabled = true,
+                                rotationGesturesEnabled = true,
+                                scrollGesturesEnabledDuringRotateOrZoom = true,
+                                compassEnabled = true
+                            )
 
-                    Spacer(modifier = modifier.height(8.dp))
-
-                    Box(
-                        modifier = modifier
-                            .fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.drivers_available_label),
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            fontSize = 26.sp
-                        )
-                    }
-                    Spacer(modifier = modifier.height(16.dp))
-                }
-
-                items(result.options, key = { it.id }) { rideOption ->
-                    RideConfirmOptionItem(
-                        rideOption = rideOption,
-                        isConfirmRideCallReady = uiState.isConfirmRideCallReady,
-                        onAction = {
-                            viewModel.handleAction(it)
+                        ) {
+                            Marker(
+                                state = MarkerState(
+                                    position = LatLng(
+                                        result.origin.latitude,
+                                        result.origin.longitude
+                                    )
+                                ),
+                                title = uiState.origin,
+                            )
+                            Marker(
+                                state = MarkerState(
+                                    position = LatLng(
+                                        result.destination.latitude,
+                                        result.destination.longitude
+                                    )
+                                ),
+                                title = uiState.destination
+                            )
                         }
-                    )
+                    }
+
+                    item { Spacer(modifier = modifier.height(16.dp)) }
+
+                    item {
+                        ConfirmRideContent(
+                            rideEstimate = result,
+                            uiState = uiState
+                        )
+                    }
+
+
+                    item {
+
+                        Spacer(modifier = modifier.height(8.dp))
+
+                        Box(
+                            modifier = modifier
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.drivers_available_label),
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                fontSize = 26.sp
+                            )
+                        }
+                        Spacer(modifier = modifier.height(16.dp))
+                    }
+
+                    items(result.options, key = { it.id }) { rideOption ->
+                        RideConfirmOptionItem(
+                            rideOption = rideOption,
+                            isConfirmRideCallReady = uiState.isConfirmRideCallReady,
+                            onAction = {
+                                viewModel.handleAction(it)
+                            }
+                        )
+                    }
                 }
             }
         }
