@@ -136,11 +136,27 @@ class RideConfirmViewModel @Inject constructor(
                     }
 
                     is Result.Success -> {
-                        updateState {
-                            it.copy(
-                                isRideConfirmed = true,
-                                isLoading = !_uiState.value.isRideConfirmed
-                            )
+                        updateState { it.copy(confirmRideProgress = 15f) }
+                        delay(300)
+                        updateState { it.copy(confirmRideProgress = 25f) }
+                        delay(300)
+                        updateState { it.copy(confirmRideProgress = 35f) }
+                        delay(300)
+                        updateState { it.copy(confirmRideProgress = 50f) }
+                        delay(300)
+                        updateState { it.copy(confirmRideProgress = 65f) }
+                        delay(300)
+                        updateState { it.copy(confirmRideProgress = 85f) }
+                        delay(300)
+                        updateState { it.copy(confirmRideProgress = 100f) }
+                        delay(100)
+                        if(_uiState.value.confirmRideProgress > 99f) {
+                            updateState {
+                                it.copy(
+                                    isRideConfirmed = true,
+                                    isLoading = !_uiState.value.isRideConfirmed
+                                )
+                            }
                         }
                     }
 

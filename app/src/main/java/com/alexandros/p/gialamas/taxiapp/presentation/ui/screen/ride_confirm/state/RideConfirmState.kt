@@ -18,5 +18,6 @@ data class RideConfirmState(
     val options: List<RideOption> = emptyList(),
     val error: UiText? = null,
     val restart: Boolean = false,
-    val isConfirmRideCallReady: Boolean = true
+    val isConfirmRideCallReady: Boolean = true,
+    val confirmRideProgress: Float = 0f
 ) : ViewState
